@@ -1,0 +1,32 @@
+{
+  "name": "zkloan-credit-scorer-contract",
+  "version": "0.1.0",
+  "author": "IOG",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./managed/zkloan-credit-scorer/contract": {
+      "types": "./dist/managed/zkloan-credit-scorer/contract/index.d.ts",
+      "import": "./dist/managed/zkloan-credit-scorer/contract/index.js",
+      "default": "./dist/managed/zkloan-credit-scorer/contract/index.js"
+    }
+  },
+  "scripts": {
+    "compact": "compact compile src/zkloan-credit-scorer.compact src/managed/zkloan-credit-scorer",
+    "test": "vitest run",
+    "test:compile": "npm run compact && vitest run",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/zkloan-credit-scorer.compact ./src/schnorr.compact ./dist",
+    "lint": "eslint src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}
+
