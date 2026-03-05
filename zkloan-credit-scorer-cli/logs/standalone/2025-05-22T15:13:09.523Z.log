@@ -1,0 +1,15 @@
+{"level":30,"time":1747926799964,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"File path for save file not found, building wallet from scratch"}
+{"level":30,"time":1747926800040,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet seed is: 0000000000000000000000000000000000000000000000000000000000000001"}
+{"level":30,"time":1747926800041,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet address is: mn_shield-addr_undeployed1mjngjmnlutcq50trhcsk3hugvt9wyjnhq3c7prryd5nqmvtzva0sxqpvzkdy4k9u7eyffff53cge62tqylevq3wqps86tdjuahsquwvucsy9kffv"}
+{"level":30,"time":1747926800042,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet balance is: 0"}
+{"level":30,"time":1747926800042,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting to receive tokens..."}
+{"level":30,"time":1747926800047,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for funds. Backend lag: 0, wallet lag: 0, transactions=0"}
+{"level":30,"time":1747926812205,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for funds. Backend lag: 0, wallet lag: 0, transactions=1"}
+{"level":30,"time":1747926812206,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet balance is: 25000000000000000"}
+{"level":30,"time":1747926830179,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Deploying counter contract..."}
+{"level":30,"time":1747926854572,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Deployed contract at address: 0200c2ff821e0eca51db4714f23b443929889abb108a4caaabfa34440136006ba45b"}
+{"level":30,"time":1747926858762,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Incrementing..."}
+{"level":30,"time":1747926883358,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Transaction 000000002a4254cfdc27fa2c2bb37bc632f7ef42a7261517c8b322bd3e588296c45aa354 added in block 13"}
+{"level":50,"time":1747927168582,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Found error 'Aborted with Ctrl+C'"}
+{"level":30,"time":1747927168583,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Exiting..."}
+{"level":30,"time":1747927170146,"pid":12763,"hostname":"Hectors-MacBook-Pro.local","msg":"Goodbye"}

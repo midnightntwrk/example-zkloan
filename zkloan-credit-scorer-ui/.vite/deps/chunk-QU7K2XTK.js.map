@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../node_modules/@midnight-ntwrk/midnight-js-network-id/src/index.ts"],
+  "sourcesContent": [null],
+  "mappings": ";AAkBA,IAAI,mBAA8B;AAO3B,IAAM,eAAe,CAAC,OAAuB;AAClD,qBAAmB;AACrB;IAOa,eAAe,MAAiB;",
+  "names": []
+}

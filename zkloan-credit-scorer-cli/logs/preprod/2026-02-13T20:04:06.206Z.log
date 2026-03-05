@@ -1,0 +1,20 @@
+{"level":30,"time":1771013048574,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Using mnemonic from .env file..."}
+{"level":30,"time":1771013048577,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Building wallet from mnemonic..."}
+{"level":30,"time":1771013048711,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet address: mn_addr_preprod16tdz2l9500jsv9k2kff0wea0r6a54ewfzetg5xu5r79smvr2mqeqe9zn25"}
+{"level":30,"time":1771013048711,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet to sync..."}
+{"level":30,"time":1771013048717,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet sync. Synced: false"}
+{"level":30,"time":1771013053795,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet sync. Synced: false"}
+{"level":30,"time":1771013058900,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet sync. Synced: false"}
+{"level":30,"time":1771013064004,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet sync. Synced: false"}
+{"level":30,"time":1771013069103,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet sync. Synced: false"}
+{"level":30,"time":1771013074160,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet sync. Synced: false"}
+{"level":30,"time":1771013079260,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet sync. Synced: false"}
+{"level":30,"time":1771013112085,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for wallet sync. Synced: true"}
+{"level":30,"time":1771013112107,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Unshielded balance: 4000000000 tDUST"}
+{"level":30,"time":1771013112107,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Shielded balance: 0 tDUST"}
+{"level":30,"time":1771013112107,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Total balance: 4000000000 tDUST"}
+{"level":30,"time":1771013112116,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"No unshielded Night UTXOs available for dust registration, or all are already registered"}
+{"level":30,"time":1771013112116,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Current dust balance: 15710529454000000000"}
+{"level":30,"time":1771013121144,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Deploying ZKLoan Credit Scorer contract..."}
+{"level":50,"time":1771013123470,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Found error 'Failed to prove transaction'"}
+{"level":30,"time":1771013123471,"pid":61422,"hostname":"Hectors-MacBook-Pro.local","msg":"Exiting..."}
