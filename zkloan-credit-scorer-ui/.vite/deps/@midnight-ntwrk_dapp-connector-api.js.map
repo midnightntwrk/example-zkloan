@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../node_modules/@midnight-ntwrk/dapp-connector-api/src/errors.ts"],
+  "sourcesContent": [null],
+  "mappings": ";;;AAeO,IAAM,aAAa;;EAExB,eAAe;;EAEf,UAAU;;EAEV,gBAAgB;;EAEhB,oBAAoB;;EAEpB,cAAc;;",
+  "names": []
+}

@@ -1,0 +1,23 @@
+{"level":30,"time":1747931738211,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"File path for save file not found, building wallet from scratch"}
+{"level":30,"time":1747931738306,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet seed is: 0000000000000000000000000000000000000000000000000000000000000001"}
+{"level":30,"time":1747931738306,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet address is: mn_shield-addr_undeployed1mjngjmnlutcq50trhcsk3hugvt9wyjnhq3c7prryd5nqmvtzva0sxqpvzkdy4k9u7eyffff53cge62tqylevq3wqps86tdjuahsquwvucsy9kffv"}
+{"level":30,"time":1747931738307,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet balance is: 0"}
+{"level":30,"time":1747931738307,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting to receive tokens..."}
+{"level":30,"time":1747931738313,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for funds. Backend lag: 0, wallet lag: 0, transactions=0"}
+{"level":30,"time":1747931750455,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for funds. Backend lag: 0, wallet lag: 0, transactions=1"}
+{"level":30,"time":1747931750456,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet balance is: 25000000000000000"}
+{"level":30,"time":1747931753799,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Deploying counter contract..."}
+{"level":30,"time":1747931779534,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Deployed contract at address: 0200962862f4ea2ba15a5fafa4148cff6e6b8fd6d3a857f3f2c96b12db833844e7cd"}
+{"level":30,"time":1747931826662,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Incrementing..."}
+{"level":30,"time":1747931851369,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Transaction 00000000e5418786f27f5d4614fc27a415eb1ec6d215822429288ef44ed0353feeab0f46 added in block 19"}
+{"level":30,"time":1747932000472,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Checking contract ledger state..."}
+{"level":30,"time":1747932000491,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Ledger state: {\"tokens\":{},\"round\":\"5\"}"}
+{"level":30,"time":1747932000492,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Current counter value: {\"tokens\":{},\"round\":\"5\"}"}
+{"level":30,"time":1747932045451,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Incrementing..."}
+{"level":30,"time":1747932068122,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Transaction 0000000037835311395c8a87a4b0915f615f2f7864eff47b475e3476cd1db0db250f5434 added in block 55"}
+{"level":30,"time":1747932070386,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Checking contract ledger state..."}
+{"level":30,"time":1747932070390,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Ledger state: {\"tokens\":{},\"round\":\"10\"}"}
+{"level":30,"time":1747932070391,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Current counter value: {\"tokens\":{},\"round\":\"10\"}"}
+{"level":50,"time":1747932572497,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Found error 'Aborted with Ctrl+C'"}
+{"level":30,"time":1747932572498,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Exiting..."}
+{"level":30,"time":1747932574078,"pid":47572,"hostname":"Hectors-MacBook-Pro.local","msg":"Goodbye"}

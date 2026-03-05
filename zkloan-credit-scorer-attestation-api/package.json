@@ -1,0 +1,25 @@
+{
+  "name": "zkloan-credit-scorer-attestation-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zkloan-credit-scorer-contract": "0.1.0",
+    "@midnight-ntwrk/compact-runtime": "0.14.0",
+    "@midnight-ntwrk/midnight-js-network-id": "3.0.0",
+    "restify": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/restify": "^8.5.12",
+    "tsx": "^4.19.0",
+    "vitest": "^4.0.15"
+  }
+}
