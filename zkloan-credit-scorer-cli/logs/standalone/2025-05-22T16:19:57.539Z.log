@@ -1,0 +1,11 @@
+{"level":30,"time":1747930809397,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"File path for save file not found, building wallet from scratch"}
+{"level":30,"time":1747930809489,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet seed is: 0000000000000000000000000000000000000000000000000000000000000001"}
+{"level":30,"time":1747930809490,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet address is: mn_shield-addr_undeployed1mjngjmnlutcq50trhcsk3hugvt9wyjnhq3c7prryd5nqmvtzva0sxqpvzkdy4k9u7eyffff53cge62tqylevq3wqps86tdjuahsquwvucsy9kffv"}
+{"level":30,"time":1747930809491,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet balance is: 0"}
+{"level":30,"time":1747930809491,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting to receive tokens..."}
+{"level":30,"time":1747930809495,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for funds. Backend lag: 0, wallet lag: 0, transactions=0"}
+{"level":30,"time":1747930821629,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Waiting for funds. Backend lag: 0, wallet lag: 0, transactions=1"}
+{"level":30,"time":1747930821630,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Your wallet balance is: 25000000000000000"}
+{"level":50,"time":1747930832604,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Found error 'Aborted with Ctrl+C'"}
+{"level":30,"time":1747930832606,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Exiting..."}
+{"level":30,"time":1747930833954,"pid":25291,"hostname":"Hectors-MacBook-Pro.local","msg":"Goodbye"}

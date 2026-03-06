@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.cjs",
+  "sourceRoot": "../../../",
+  "sources": ["src/zkloan-credit-scorer.compact", "compiler/standard-library.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAeA;;;;;;;;;;MA2BA,AAAA,WA6BC;;;;cA7B0B,WAA4B;cAAE,iBAAwB;;;;;;;;;;;;;;;;;;;;;;yCAAtD,WAA4B,+BAAE,iBAAwB;;;;;;;;;8CAAtD,WAA4B;8CAAE,iBAAwB;;;OA6BhF;;;GAAC;EAxDF;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;IAsBA;;;;;;;;;;uDAAiD;IACjD;;;;;;;;;;uDAA6E;;;;;;;GAiC3E;ECiDF,AAAA;;;;;;;;EDhFA,AAAA,8BAAgD;;0DAAhD,0BAAgD;;;;;;;;;;;;;GAAA;EAEhD,AAAA,eA6BC,4BA7B0B,WAA4B,EAAE,iBAAwB;oDACrE;;;;;;;;;;;yJAA0B,WAAS;;;;uGAA1B;;UACjB,SAA6C;;UAC7C,KAA2B;QAEvB,SAAO,wBAAuB,SAAO;;QAA0B,SAAO;;YACvE,eAA2B;YAC3B,kBAA2F,GAAlE,iBAAe,GAAG,eAAa;iCAAG,eAAa;iCAAG,iBAAe;YAG1F,MAIG;;yCAFoB,kBAAgB;;;QAMtC,SAAO,wBAAuB,SAAO;QAIpC,SAAO;;GAOf;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;IAlCD;;;;uCAAA;;;;;;;;;;;;;;;;0FAAiD;;;;;uCAAjD;;;;;;;;;;;;0FAAiD;;;;;;;;;;;;uCAAjD;;;;;;;;;;;;;;;0FAAiD;;;;;;;;KAAA;IACjD;;;;uCAAA;;;;;;;;;;;;;;;;0FAA6E;;;;;uCAA7E;;;;;;;;;;;;0FAA6E;;;;;;;;;;;;uCAA7E;;;;;;;;;;;;;;;0FAA6E;;;;;;;;;;;;0EAA7E,KAA6E;;;;;;;2CAAhC;;;;;;;;;;;oHAA7C,KAA6E;;;;;;;;8FAAF;;;;;2CAA9B;;;;;;;;;;;oHAA7C,KAA6E;;;;8FAAF;;;;;;;;;;;;2CAA9B;;;;;;;;;;;oHAA7C,KAA6E;;;;;;;8FAAF;;;;;;;;;;;;2CAA9B;;;;;;;;;;;oHAA7C,KAA6E;;;;;;;;;8FAAF;;;;;yFAA3E,KAA6E;;;;;;KAAA;;;;;;;;;;;;;;;;"
+}
