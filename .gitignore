@@ -1,6 +1,6 @@
 # Node.js
 node_modules/
-dist/
+**/dist/
 .vite/
 build/
 npm-debug.log*
@@ -42,14 +42,11 @@ jspm_packages/
 .env
 
 # MacOS
-.DS_Store
+**/.DS_Store
 
 # VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/
+**/.vscode/
 
 # IDEs and editors
 .idea/
