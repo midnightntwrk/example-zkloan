@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="61" failures="0" errors="0" time="2.095636292">
+    <testsuite name="src/test/zkloan-credit-scorer.test.ts" timestamp="2026-02-13T20:52:19.987Z" hostname="Hectors-MacBook-Pro.local" tests="61" failures="0" errors="0" skipped="0" time="2.095636292">
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; generates initial ledger state deterministically" time="0.049368959">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; approves a Tier 1 loan and caps at the max amount" time="0.032169333">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; approves a Tier 2 loan and gives the requested amount" time="0.029990625">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; proposes a Tier 3 loan when amount exceeds limit" time="0.030066541">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; rejects a loan for a non-eligible applicant" time="0.029405208">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; creates multiple loans for the same user with incrementing IDs" time="0.057538792">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws an error if the user is blacklisted" time="0.015965667">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; allows admin to blacklist and remove a user" time="0.019575209">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; migrates a small number of loans (1 batch) and cleans up" time="0.097020417">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; migrates multiple batches of loans (7 loans) correctly" time="0.173204584">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws an error if user tries to requestLoan during migration" time="0.142032959">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; migrates loans to a new PIN that already has loans" time="0.185188708">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when requesting loan with zero amount" time="0.011744208">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when blacklisted user tries to change PIN" time="0.029128417">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when changing PIN to the same value" time="0.0252235">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; allows admin to transfer admin role to new admin" time="0.015897875">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; approves exactly at Tier 1 boundary when amount within limit (score=700, income=2000, tenure=24)" time="0.028774">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; proposes Tier 2 when just below Tier 1 threshold (score=699)" time="0.028679084">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; proposes at Tier 2 boundary when amount exceeds limit (score=600, income=1500)" time="0.028672833">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; proposes Tier 3 when just below Tier 2 threshold (score=599)" time="0.02905125">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; proposes at Tier 3 boundary when amount exceeds limit (score=580)" time="0.02894875">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; rejects when just below Tier 3 threshold (score=579)" time="0.028227125">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; proposes Tier 2 when Tier 1 income requirement not met" time="0.028300625">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; proposes Tier 2 when Tier 1 tenure requirement not met" time="0.026980875">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when non-admin tries to blacklist a user" time="0.014431125">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when non-admin tries to remove from blacklist" time="0.015967791">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when non-admin tries to transfer admin" time="0.014906291">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; generates same public key for same user and PIN (determinism)" time="0.012426458">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; generates different public key for same user with different PIN" time="0.011541833">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; generates different public key for different users with same PIN" time="0.010763417">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; blacklisting an already blacklisted user is idempotent" time="0.016292875">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; removing a non-blacklisted user from blacklist does not throw" time="0.015071833">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; same user with different PINs has separate loan records" time="0.048213125">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; blacklisting a different Zswap key does not affect the caller" time="0.027762459">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; new admin can perform admin operations after transfer" time="0.014642292">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; old admin cannot perform admin operations after transfer" time="0.014528416">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; can chain multiple admin transfers" time="0.01444">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; creates Proposed loan when requested amount exceeds tier limit" time="0.027985791">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; creates Approved loan when requested amount is within tier limit" time="0.028708208">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; creates Approved loan when requested amount is less than tier limit" time="0.028682209">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; respondToLoan with accept=true changes Proposed to Approved" time="0.037071292">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; respondToLoan with accept=false changes Proposed to NotAccepted with zero amount" time="0.034884583">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when respondToLoan is called on non-Proposed loan" time="0.03136175">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when respondToLoan is called on already accepted loan" time="0.036719583">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when respondToLoan is called with non-existent loan ID" time="0.0319185">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when respondToLoan is called by user with no loans" time="0.0147795">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when blacklisted user tries to respondToLoan" time="0.030748833">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; creates Proposed loan for Tier 2 user exceeding limit" time="0.030260917">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; creates Proposed loan for Tier 3 user exceeding limit" time="0.030239166">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; rejected applicant still gets Rejected status (not Proposed)" time="0.030749833">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; can have multiple Proposed loans and respond to each independently" time="0.070505083">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; rejects loan with invalid attestation signature" time="0.025198334">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; rejects loan with unregistered provider" time="0.018068625">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; rejects loan after provider is removed" time="0.029082333">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; user binding prevents replay (signature for user A cannot be used by user B)" time="0.024198959">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when non-admin tries to register provider" time="0.01548325">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when non-admin tries to remove provider" time="0.014631209">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; throws when removing a non-existent provider" time="0.014292208">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; multiple providers can both be used for attestation" time="0.044916375">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; provider registry shows up in ledger state" time="0.01434325">
+        </testcase>
+        <testcase classname="src/test/zkloan-credit-scorer.test.ts" name="ZKLoanCreditScorer smart contract &gt; attestation with tampered credit data fails signature verification" time="0.024362083">
+        </testcase>
+    </testsuite>
+</testsuites>
