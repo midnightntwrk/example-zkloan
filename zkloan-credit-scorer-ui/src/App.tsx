@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Stack, Typography, Link, Alert } from '@mui/material';
+import { Box, Stack, Typography, Link } from '@mui/material';
 import { MainLayout, ContractConnect, PrivateStateCard, LoanRequestForm, MyLoans } from './components';
 import { useZKLoanContext } from './hooks';
 import { type ZKLoanDeployment } from './contexts';
+import { tokens } from './config/theme';
 
 const App: React.FC = () => {
   const { deployment$ } = useZKLoanContext();
@@ -17,48 +18,121 @@ const App: React.FC = () => {
 
   return (
     <MainLayout>
-      <Typography variant="h4" component="h1" sx={{ mb: 1 }}>
-        Privacy-Preserving Credit Scoring
-      </Typography>
-      <Typography variant="body1" color="grey.400" sx={{ mb: 2 }}>
-        Apply for a loan using zero-knowledge proofs. Your financial data stays private.
-      </Typography>
-
-      <Alert severity="warning" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          <strong>Disclaimer:</strong> This is a demonstration application designed to showcase Midnight's
-          technology. It is not a real lending service and serves as a reference implementation
-          for the builder community.
+      {/* Hero */}
+      <Box
+        sx={{
+          mb: { xs: 7, md: 10 },
+          animation: 'reveal 700ms cubic-bezier(.2,.8,.2,1) both',
+        }}
+      >
+        <Typography
+          variant="overline"
+          sx={{ display: 'block', mb: 4, color: tokens.inkMuted }}
+        >
+          <Box component="span" sx={{ color: tokens.accent, mr: 1.5 }}>●</Box>
+          Privacy-preserving loans · Midnight Network · Ledger v8
         </Typography>
-      </Alert>
 
-      <Stack spacing={3}>
-        {/* Contract connection - always visible and interactive */}
-        <ContractConnect />
+        <Typography
+          variant="h1"
+          component="h1"
+          sx={{
+            mb: 3.5,
+            color: tokens.ink,
+          }}
+        >
+          Credit scoring,{' '}
+          <Box
+            component="em"
+            sx={{
+              fontStyle: 'italic',
+              color: tokens.accent,
+              fontVariationSettings: '"opsz" 144, "SOFT" 100',
+            }}
+          >
+            without the paperwork
+          </Box>
+          .
+        </Typography>
 
-        {/* Main UI - visible but disabled until connected */}
+        <Typography
+          sx={{
+            fontFamily: '"IBM Plex Sans", sans-serif',
+            fontSize: '1.05rem',
+            lineHeight: 1.65,
+            color: tokens.inkDim,
+            maxWidth: 920,
+            mb: 4,
+          }}
+        >
+          Apply for a loan using zero-knowledge proofs. Your credit score, income, and
+          tenure stay on this device — only the verdict reaches the ledger.
+        </Typography>
+
+        {/* Disclaimer as editorial aside */}
         <Box
           sx={{
-            opacity: isConnected ? 1 : 0.5,
+            borderLeft: `2px solid ${tokens.amber}`,
+            backgroundColor: `${tokens.amber}0a`,
+            pl: 2.5,
+            pr: 3,
+            py: 2,
+          }}
+        >
+          <Typography
+            variant="overline"
+            sx={{ display: 'block', color: tokens.amber, mb: 0.5 }}
+          >
+            Demonstration only
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: '"IBM Plex Sans", sans-serif',
+              fontSize: '0.88rem',
+              lineHeight: 1.55,
+              color: tokens.inkDim,
+            }}
+          >
+            A reference implementation showcasing Midnight's technology, not a real
+            lending service. Use it to learn the stack — not to apply for credit.
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Sections */}
+      <Stack
+        spacing={4}
+        sx={{
+          '& > *': {
+            animation: 'reveal 700ms cubic-bezier(.2,.8,.2,1) both',
+          },
+          '& > *:nth-of-type(1)': { animationDelay: '120ms' },
+          '& > *:nth-of-type(2)': { animationDelay: '220ms' },
+        }}
+      >
+        <ContractConnect />
+
+        <Box
+          sx={{
+            opacity: isConnected ? 1 : 0.38,
+            filter: isConnected ? 'none' : 'saturate(0.4)',
             pointerEvents: isConnected ? 'auto' : 'none',
-            transition: 'opacity 0.3s ease',
+            transition: 'opacity 420ms ease, filter 420ms ease',
             position: 'relative',
           }}
         >
           {!isConnected && (
             <Box
+              aria-hidden
               sx={{
                 position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
+                inset: 0,
                 zIndex: 10,
                 cursor: 'not-allowed',
               }}
             />
           )}
-          <Stack spacing={3}>
+          <Stack spacing={4}>
             <PrivateStateCard />
             <LoanRequestForm />
             <MyLoans />
@@ -66,13 +140,58 @@ const App: React.FC = () => {
         </Box>
       </Stack>
 
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
-        <Typography variant="body2" color="grey.600">
+      {/* Colophon */}
+      <Box
+        sx={{
+          mt: { xs: 10, md: 14 },
+          pt: 4,
+          borderTop: `1px solid ${tokens.hairline}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: '"IBM Plex Mono", monospace',
+            fontSize: '0.7rem',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: tokens.inkMuted,
+          }}
+        >
           Built on{' '}
-          <Link href="https://midnight.network" target="_blank" rel="noopener" color="primary">
+          <Link
+            href="https://midnight.network"
+            target="_blank"
+            rel="noopener"
+            sx={{
+              color: tokens.ink,
+              textDecoration: 'none',
+              borderBottom: `1px solid ${tokens.hairlineStrong}`,
+              pb: '1px',
+              '&:hover': {
+                color: tokens.accent,
+                borderBottomColor: tokens.accent,
+              },
+            }}
+          >
             Midnight
           </Link>
-          . Private by design.
+          {' · '}Private by design
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: '"Fraunces", serif',
+            fontStyle: 'italic',
+            fontSize: '0.88rem',
+            color: tokens.inkMuted,
+            fontVariationSettings: '"opsz" 24, "SOFT" 80',
+          }}
+        >
+          A quiet proof of solvency.
         </Typography>
       </Box>
     </MainLayout>
