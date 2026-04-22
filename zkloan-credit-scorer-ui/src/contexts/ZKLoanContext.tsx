@@ -1,7 +1,7 @@
 import React, { type PropsWithChildren, createContext, useState, useCallback, useMemo } from 'react';
 import { Buffer } from 'buffer';
 import { type ContractAddress, transientHash, CompactTypeBytes } from '@midnight-ntwrk/compact-runtime';
-import * as ledger from '@midnight-ntwrk/ledger-v7';
+import * as ledger from '@midnight-ntwrk/ledger-v8';
 import {
   BehaviorSubject,
   type Observable,

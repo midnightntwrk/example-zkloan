@@ -8,6 +8,10 @@ export enum LoanStatus { Approved = 0,
 
 export type LoanApplication = { authorizedAmount: bigint; status: LoanStatus };
 
+export type Schnorr_SchnorrSignature = { announcement: __compactRuntime.JubjubPoint;
+                                         response: bigint
+                                       };
+
 export type Witnesses<PS> = {
   getSchnorrReduction(context: __compactRuntime.WitnessContext<Ledger, PS>,
                       challengeHash_0: bigint): [PS, [bigint, bigint]];
@@ -15,11 +19,7 @@ export type Witnesses<PS> = {
                                                                                            monthlyIncome: bigint,
                                                                                            monthsAsCustomer: bigint
                                                                                          },
-                                                                                         { announcement: { x: bigint,
-                                                                                                           y: bigint
-                                                                                                         },
-                                                                                           response: bigint
-                                                                                         },
+                                                                                         Schnorr_SchnorrSignature,
                                                                                          bigint]];
 }
 
@@ -37,7 +37,31 @@ export type ImpureCircuits<PS> = {
                       account_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
   registerProvider(context: __compactRuntime.CircuitContext<PS>,
                    providerId_0: bigint,
-                   providerPk_0: { x: bigint, y: bigint }): __compactRuntime.CircuitResults<PS, []>;
+                   providerPk_0: __compactRuntime.JubjubPoint): __compactRuntime.CircuitResults<PS, []>;
+  removeProvider(context: __compactRuntime.CircuitContext<PS>,
+                 providerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+  transferAdmin(context: __compactRuntime.CircuitContext<PS>,
+                newAdmin_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
+  changePin(context: __compactRuntime.CircuitContext<PS>,
+            oldPin_0: bigint,
+            newPin_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+}
+
+export type ProvableCircuits<PS> = {
+  requestLoan(context: __compactRuntime.CircuitContext<PS>,
+              amountRequested_0: bigint,
+              secretPin_0: bigint): __compactRuntime.CircuitResults<PS, []>;
+  respondToLoan(context: __compactRuntime.CircuitContext<PS>,
+                loanId_0: bigint,
+                secretPin_0: bigint,
+                accept_0: boolean): __compactRuntime.CircuitResults<PS, []>;
+  blacklistUser(context: __compactRuntime.CircuitContext<PS>,
+                account_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
+  removeBlacklistUser(context: __compactRuntime.CircuitContext<PS>,
+                      account_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
+  registerProvider(context: __compactRuntime.CircuitContext<PS>,
+                   providerId_0: bigint,
+                   providerPk_0: __compactRuntime.JubjubPoint): __compactRuntime.CircuitResults<PS, []>;
   removeProvider(context: __compactRuntime.CircuitContext<PS>,
                  providerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   transferAdmin(context: __compactRuntime.CircuitContext<PS>,
@@ -70,7 +94,7 @@ export type Circuits<PS> = {
                       account_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
   registerProvider(context: __compactRuntime.CircuitContext<PS>,
                    providerId_0: bigint,
-                   providerPk_0: { x: bigint, y: bigint }): __compactRuntime.CircuitResults<PS, []>;
+                   providerPk_0: __compactRuntime.JubjubPoint): __compactRuntime.CircuitResults<PS, []>;
   removeProvider(context: __compactRuntime.CircuitContext<PS>,
                  providerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   transferAdmin(context: __compactRuntime.CircuitContext<PS>,
@@ -120,8 +144,8 @@ export type Ledger = {
     isEmpty(): boolean;
     size(): bigint;
     member(key_0: bigint): boolean;
-    lookup(key_0: bigint): { x: bigint, y: bigint };
-    [Symbol.iterator](): Iterator<[bigint, { x: bigint, y: bigint }]>
+    lookup(key_0: bigint): __compactRuntime.JubjubPoint;
+    [Symbol.iterator](): Iterator<[bigint, __compactRuntime.JubjubPoint]>
   };
 }
 
@@ -133,6 +157,7 @@ export declare class Contract<PS = any, W extends Witnesses<PS> = Witnesses<PS>>
   witnesses: W;
   circuits: Circuits<PS>;
   impureCircuits: ImpureCircuits<PS>;
+  provableCircuits: ProvableCircuits<PS>;
   constructor(witnesses: W);
   initialState(context: __compactRuntime.ConstructorContext<PS>): __compactRuntime.ConstructorResult<PS>;
 }

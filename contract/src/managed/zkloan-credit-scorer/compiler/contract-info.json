@@ -1,8 +1,12 @@
 {
+  "compiler-version": "0.30.0",
+  "language-version": "0.22.0",
+  "runtime-version": "0.15.0",
   "circuits": [
     {
       "name": "requestLoan",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "amountRequested",
@@ -28,6 +32,7 @@
     {
       "name": "respondToLoan",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "loanId",
@@ -59,6 +64,7 @@
     {
       "name": "blacklistUser",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "account",
@@ -86,6 +92,7 @@
     {
       "name": "removeBlacklistUser",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "account",
@@ -113,6 +120,7 @@
     {
       "name": "registerProvider",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "providerId",
@@ -125,24 +133,10 @@
           "name": "providerPk",
           "type": {
             "type-name": "Alias",
-            "name": "NativePoint",
+            "name": "JubjubPoint",
             "type": {
-              "type-name": "Struct",
-              "name": "SimplePoint",
-              "elements": [
-                {
-                  "name": "x",
-                  "type": {
-                    "type-name": "Field"
-                  }
-                },
-                {
-                  "name": "y",
-                  "type": {
-                    "type-name": "Field"
-                  }
-                }
-              ]
+              "type-name": "Opaque",
+              "tsType": "JubjubPoint"
             }
           }
         }
@@ -156,6 +150,7 @@
     {
       "name": "removeProvider",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "providerId",
@@ -174,6 +169,7 @@
     {
       "name": "transferAdmin",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "newAdmin",
@@ -201,6 +197,7 @@
     {
       "name": "changePin",
       "pure": false,
+      "proof": true,
       "arguments": [
         {
           "name": "oldPin",
@@ -226,6 +223,7 @@
     {
       "name": "publicKey",
       "pure": true,
+      "proof": false,
       "arguments": [
         {
           "name": "sk",
@@ -250,6 +248,7 @@
     {
       "name": "schnorrChallenge",
       "pure": true,
+      "proof": false,
       "arguments": [
         {
           "name": "ann_x",
@@ -357,24 +356,10 @@
                 "name": "announcement",
                 "type": {
                   "type-name": "Alias",
-                  "name": "NativePoint",
+                  "name": "JubjubPoint",
                   "type": {
-                    "type-name": "Struct",
-                    "name": "SimplePoint",
-                    "elements": [
-                      {
-                        "name": "x",
-                        "type": {
-                          "type-name": "Field"
-                        }
-                      },
-                      {
-                        "name": "y",
-                        "type": {
-                          "type-name": "Field"
-                        }
-                      }
-                    ]
+                    "type-name": "Opaque",
+                    "tsType": "JubjubPoint"
                   }
                 }
               },

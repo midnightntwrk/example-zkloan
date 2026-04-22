@@ -8,86 +8,84 @@
 
 ### Prerequisites
 
-Before running this application, ensure you have the following installed:
+- Node.js v22+
+- npm v10+
+- Docker + Docker Compose (for the local standalone network)
+- Compact toolchain 0.30.0 — install with the [`compact` devtool](https://docs.midnight.network/develop/tutorial/building/prereqs#compact-developer-tools), then run `compact update` if needed. Verify with `compact compile --version` (should print `0.30.0`)
+- For the remote testnet flow only: the [Midnight Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) browser extension
 
-- **Node.js** (v22 or higher)
-- **npm** (v10 or higher)
-- **Midnight Lace Wallet** browser extension ([Download](https://midnight.network))
-- **Compact Compiler** (`compactc`) for building the contract
-- **Local Proof Server** running on your machine (required for generating ZK proofs)
+### Dependency versions
 
-### Midnight SDK Versions
+The project targets ledger v8 and the 4.x Midnight JS SDK. See [Midnight's compatibility matrix](https://docs.midnight.network/relnotes/overview) for the full list.
 
-This project uses the **stable** Midnight SDK (not alpha/beta):
+| Component | Version |
+|---|---|
+| `@midnight-ntwrk/ledger-v8` | 8.0.3 |
+| `@midnight-ntwrk/compact-runtime` | 0.15.0 |
+| `@midnight-ntwrk/compact-js` | 2.5.0 |
+| `@midnight-ntwrk/midnight-js-*` | 4.0.4 |
+| `@midnight-ntwrk/dapp-connector-api` | 4.0.1 |
+| `@midnight-ntwrk/wallet-sdk-facade` / `dust-wallet` / `hd` | 3.0.0 |
+| `@midnight-ntwrk/wallet-sdk-shielded` / `unshielded-wallet` | 2.1.0 |
+| Compact toolchain (`compact compile`) | 0.30.0 |
+| Compact language pragma | 0.22 |
+| Proof server image | `midnightntwrk/proof-server:8.0.3` |
+| Indexer image | `midnightntwrk/indexer-standalone:4.0.1` |
+| Node image | `midnightntwrk/midnight-node:0.22.3` |
 
-| Package | Version |
-|---------|---------|
-| `@midnight-ntwrk/midnight-js-*` | 3.0.0 |
-| `@midnight-ntwrk/ledger-v7` | 7.0.0 |
-| `@midnight-ntwrk/compact-js` | 2.4.0 |
-| `@midnight-ntwrk/compact-runtime` | 0.14.0 |
-| `@midnight-ntwrk/wallet-sdk-*` | 1.0.0 / 3.0.0 |
+### 1. Install dependencies
 
-### 1. Clone and Install Dependencies
+From the repo root:
 
 ```bash
-git clone https://github.com/midnight/zkloan-credit-scorer.git
-cd zkloan-credit-scorer
 npm install
 ```
 
-### 2. Build the Contract
+This installs all four workspaces (`contract`, `zkloan-credit-scorer-cli`, `zkloan-credit-scorer-ui`, `zkloan-credit-scorer-attestation-api`).
 
-The Compact smart contract must be compiled before running the UI:
+### 2. Compile and build the contract
+
+Two steps — `compact compile` generates the Compact artifacts, then `tsc` packages them for the other workspaces to import:
 
 ```bash
 cd contract
-npm run build
+npm run compact   # generates src/managed/ (JS bindings + prover/verifier keys + ZK IR)
+npm run build     # produces dist/ that CLI and UI consume
 ```
 
-This compiles the Compact contract and generates:
-- JavaScript bindings in `dist/managed/zkloan-credit-scorer/contract/`
-- Prover/verifier keys in `dist/managed/zkloan-credit-scorer/keys/`
-- ZK intermediate representations in `dist/managed/zkloan-credit-scorer/zkir/`
-
-### 3. Run the Contract Tests (Optional)
+Optional — run the contract test suite:
 
 ```bash
-cd contract
 npm test
 ```
 
-### 4. Start the Proof Server
+### 3. Start the local standalone network
 
-The local proof server is required to generate zero-knowledge proofs. Start it before running the UI:
-
-```bash
-# Follow Midnight documentation for starting the proof server
-# Typically runs on http://localhost:6300
-```
-
-### 5. Build and Run the CLI
-
-The CLI is used to deploy contracts, request loans, and manage the DApp. First, build it:
+The standalone flow runs node + indexer + proof server locally via Docker Compose. The project ships a [`standalone.yml`](zkloan-credit-scorer-cli/standalone.yml) pinned to the versions above.
 
 ```bash
 cd zkloan-credit-scorer-cli
-npm run build
+docker compose -f standalone.yml up -d
 ```
 
-Then run the CLI connecting to the Midnight testnet:
+Services come up on:
+
+- Node: `ws://127.0.0.1:9944`
+- Indexer: `http://127.0.0.1:8088`
+- Proof server: `http://127.0.0.1:6300`
+
+Wait ~15–20s for the node to become healthy (`docker compose -f standalone.yml ps`).
+
+### 4. Run the CLI against the local network
 
 ```bash
-npm run testnet-remote
+cd zkloan-credit-scorer-cli
+npm run standalone
 ```
 
-This requires:
-- A wallet mnemonic (you'll be prompted, or set `WALLET_MNEMONIC` in `.env`)
-- tDUST tokens in your wallet (get from the [Midnight Faucet](https://faucet.preview.midnight.network/))
+The CLI uses a pre-funded hex seed against the local undeployed network, so no faucet or wallet extension is required.
 
-#### CLI Interactive Menu
-
-Once running, the CLI presents an interactive menu:
+On first run it prompts with:
 
 ```
 1. Deploy a new ZKLoan Credit Scorer contract
@@ -95,46 +93,66 @@ Once running, the CLI presents an interactive menu:
 3. Exit
 ```
 
-After deploying or joining, you can:
-- Request loans
-- Change PIN
-- Display contract state
-- Display wallet balances
-- Admin functions (blacklist users, transfer admin role)
+After deploying or joining you can request loans, respond to proposals, change PIN, display state, and run admin actions. **Save the deployed contract address** if you want to connect the UI to it.
 
-**Save the contract address** after deployment - users will need it to connect via the UI.
+#### Required env var: `MIDNIGHT_STORAGE_PASSWORD`
 
-### 6. Build and Run the UI
+The level-private-state-provider encrypts the contract's private state (credit score, income, attestation signature) on disk. v4 of the provider enforces:
+
+- ≥ 16 characters
+- At least 3 of: uppercase, lowercase, digits, special chars
+- No 4+ repeated identical chars in a row
+- No 4+ sequential char codes (e.g. `abcd`, `1234`)
+
+Set it in [`zkloan-credit-scorer-cli/.env`](zkloan-credit-scorer-cli/.env):
+
+```bash
+MIDNIGHT_STORAGE_PASSWORD="<a strong 16+ char password>"
+# Optional — if unset, a random hex seed is used:
+# WALLET_MNEMONIC="<24-word BIP39 mnemonic>"
+```
+
+Losing this password means losing access to encrypted private state on disk — the provider has no recovery mechanism.
+
+### 5. Run against the remote testnet (optional)
+
+If you want to deploy against a real testnet instead of the local standalone:
+
+```bash
+cd zkloan-credit-scorer-cli
+npm run testnet-remote
+```
+
+Requirements:
+
+- `WALLET_MNEMONIC` in `.env`
+- tDUST in that wallet — get it from the [Midnight faucet](https://faucet.preview.midnight.network/)
+- `MIDNIGHT_STORAGE_PASSWORD` as above
+
+### 6. Run the UI
+
+Dev server with hot reload (uses `testnet` mode by default):
 
 ```bash
 cd zkloan-credit-scorer-ui
-npm run build
+npm run dev              # testnet
+npm run dev:standalone   # connect to the local docker network
+```
+
+Production build + preview:
+
+```bash
+npm run build            # builds testnet bundle
 npm run preview
 ```
 
-Or for development with hot reload:
+Available at `http://localhost:5173` (dev) or `http://localhost:4173` (preview).
 
-```bash
-cd zkloan-credit-scorer-ui
-npm run dev
-```
+**To connect:**
 
-The UI will be available at `http://localhost:5173` (dev) or `http://localhost:4173` (preview).
-
-### 7. Connect to the Contract
-
-1. Open the UI in your browser
-2. Ensure Midnight Lace wallet is installed and connected to the correct network
-3. Enter the deployed contract address in the "Contract Connection" field
-4. Click "Connect" to join the contract
-
-### Environment Configuration
-
-The UI can be configured via environment variables in `.env`:
-
-```bash
-VITE_NETWORK_ID=TestNet  # or MainNet
-```
+1. Open the UI in your browser.
+2. In `testnet` mode, install the Midnight Lace wallet extension and connect it to the correct network. In `standalone` mode the UI talks directly to the local docker network and no browser wallet is needed.
+3. Paste the deployed contract address into "Contract Connection" and click Connect.
 
 ### Project Structure
 
