@@ -154,30 +154,18 @@ export const PrivateStateCard: React.FC = () => {
       <CardContent sx={{ p: { xs: 3.5, md: 5 } }}>
         <SectionHeader
           index="02"
-          kicker="Private dossier"
-          title={
-            <>
-              The file that never{' '}
-              <Box
-                component="em"
-                sx={{
-                  fontStyle: 'italic',
-                  color: tokens.inkDim,
-                  fontVariationSettings: '"opsz" 32, "SOFT" 80',
-                }}
-              >
-                leaves your device
-              </Box>
-            </>
-          }
+          kicker="Private inputs"
+          title="Your private dossier"
         >
           Pick a demo applicant profile, choose a secret PIN, and review the private
-          inputs that will be fed into the zero-knowledge circuit.
+          inputs that will be fed into the zero-knowledge circuit. None of this ever
+          leaves your device.
         </SectionHeader>
 
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={1.5}
+          alignItems={{ xs: 'stretch', md: 'center' }}
           sx={{
             mt: 4,
             pt: 4,
@@ -201,9 +189,9 @@ export const PrivateStateCard: React.FC = () => {
                   {profile.applicantId}
                   <Box
                     component="span"
-                    sx={{ mx: 1.25, color: tokens.hairlineStrong }}
+                    sx={{ mx: 1, color: tokens.hairlineStrong }}
                   >
-                    |
+                    ·
                   </Box>
                   <Box component="span" sx={{ color: tokens.inkMuted }}>
                     score {profile.creditScore}
@@ -218,11 +206,12 @@ export const PrivateStateCard: React.FC = () => {
             size="small"
             label="Secret PIN"
             placeholder="4–6 digits"
-            type="password"
+            type="text"
+            inputMode="numeric"
             value={secretPin}
             onChange={handlePinChange}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ maxLength: 6 }}
+            inputProps={{ maxLength: 6, autoComplete: 'off' }}
           />
 
           <Button

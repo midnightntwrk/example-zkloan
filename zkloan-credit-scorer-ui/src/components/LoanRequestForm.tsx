@@ -5,7 +5,6 @@ import {
   Typography,
   TextField,
   Button,
-  Box,
   Alert,
   CircularProgress,
   Backdrop,
@@ -101,26 +100,11 @@ export const LoanRequestForm: React.FC = () => {
         <SectionHeader
           index="03"
           kicker="Request"
-          title={
-            <>
-              Name a figure —{' '}
-              <Box
-                component="em"
-                sx={{
-                  fontStyle: 'italic',
-                  color: tokens.accent,
-                  fontVariationSettings: '"opsz" 32, "SOFT" 100',
-                }}
-              >
-                the circuit decides
-              </Box>
-              .
-            </>
-          }
+          title="Request a loan"
         >
-          Enter the amount you'd like to borrow. The ZK circuit will verify your
-          attestation and issue a tier-bound approval — or a proposal for less — without
-          revealing the inputs.
+          Enter the amount you'd like to borrow. The ZK circuit verifies your attestation
+          and issues a tier-bound approval — or a proposal for less — without revealing
+          the inputs.
         </SectionHeader>
 
         {result && (

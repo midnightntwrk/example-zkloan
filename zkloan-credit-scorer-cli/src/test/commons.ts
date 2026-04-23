@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type Config, StandaloneConfig, currentDir, TestnetRemoteConfig } from '../config';
+import { type Config, StandaloneConfig, currentDir, PreprodConfig } from '../config';
 import {
   DockerComposeEnvironment,
   GenericContainer,
@@ -76,7 +76,7 @@ export function parseArgs(required: string[]): TestConfiguration {
     mnemonic = process.env.TEST_WALLET_MNEMONIC;
   }
 
-  let cfg: Config = new TestnetRemoteConfig();
+  let cfg: Config = new PreprodConfig();
   let env = '';
   let psMode = 'undeployed';
   let cacheFileName = '';
@@ -87,10 +87,9 @@ export function parseArgs(required: string[]): TestConfiguration {
       throw new Error('TEST_ENV environment variable is not defined.');
     }
     switch (env) {
-      case 'testnet':
-      case 'preview':
-        cfg = new TestnetRemoteConfig();
-        psMode = 'testnet';
+      case 'preprod':
+        cfg = new PreprodConfig();
+        psMode = 'preprod';
         cacheFileName = `${seed.substring(0, 7)}-${psMode}.state`;
         break;
       default:
@@ -195,7 +194,7 @@ export class TestEnvironment {
   getWallet = async (): Promise<WalletContext> => {
     this.logger.info('Setting up wallet');
 
-    // Use hex seed for standalone (genesis wallet), mnemonic for testnet
+    // Use hex seed for standalone (genesis wallet), mnemonic for preprod
     if (this.testConfig.dappConfig instanceof StandaloneConfig) {
       this.walletContext = await api.buildWalletFromHexSeed(
         this.testConfig.dappConfig,

@@ -133,21 +133,7 @@ export const MyLoans: React.FC = () => {
           <SectionHeader
             index="04"
             kicker="History"
-            title={
-              <>
-                Your ledger of{' '}
-                <Box
-                  component="em"
-                  sx={{
-                    fontStyle: 'italic',
-                    color: tokens.inkDim,
-                    fontVariationSettings: '"opsz" 32, "SOFT" 80',
-                  }}
-                >
-                  past applications
-                </Box>
-              </>
-            }
+            title="Loan history"
           >
             Every loan you request — approved, rejected, or proposed — lives here.
             Connect to a contract to begin a record.
@@ -186,21 +172,7 @@ export const MyLoans: React.FC = () => {
         <SectionHeader
           index="04"
           kicker="History"
-          title={
-            <>
-              Your ledger of{' '}
-              <Box
-                component="em"
-                sx={{
-                  fontStyle: 'italic',
-                  color: tokens.accent,
-                  fontVariationSettings: '"opsz" 32, "SOFT" 100',
-                }}
-              >
-                past applications
-              </Box>
-            </>
-          }
+          title="Loan history"
           status={hasProposed ? { label: 'Action needed', tone: 'warning' } : undefined}
         >
           Every loan you've requested from this contract. Proposed offers can be accepted

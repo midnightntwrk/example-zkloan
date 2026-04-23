@@ -106,6 +106,7 @@ export const ContractConnect: React.FC = () => {
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
             spacing={1.5}
+            alignItems="stretch"
             sx={{
               mt: 4,
               pt: 4,
@@ -126,7 +127,7 @@ export const ContractConnect: React.FC = () => {
               variant="contained"
               onClick={handleJoin}
               disabled={!contractAddress.trim()}
-              sx={{ minWidth: 140, whiteSpace: 'nowrap' }}
+              sx={{ minWidth: 140, whiteSpace: 'nowrap', alignSelf: { xs: 'stretch', sm: 'auto' } }}
             >
               Connect →
             </Button>

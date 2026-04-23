@@ -114,45 +114,40 @@ MIDNIGHT_STORAGE_PASSWORD="<a strong 16+ char password>"
 
 Losing this password means losing access to encrypted private state on disk — the provider has no recovery mechanism.
 
-### 5. Run against the remote testnet (optional)
+### 5. Run against Preprod (optional)
 
-If you want to deploy against a real testnet instead of the local standalone:
+If you want to deploy against the Preprod network instead of the local standalone:
 
 ```bash
 cd zkloan-credit-scorer-cli
-npm run testnet-remote
+npm run preprod-remote
 ```
 
 Requirements:
 
 - `WALLET_MNEMONIC` in `.env`
-- tDUST in that wallet — get it from the [Midnight faucet](https://faucet.preview.midnight.network/)
+- tDUST in that wallet — use the Midnight faucet for Preprod
 - `MIDNIGHT_STORAGE_PASSWORD` as above
 
 ### 6. Run the UI
 
-Dev server with hot reload (uses `testnet` mode by default):
+The UI runs **only against the Midnight Preprod network** via the Midnight Lace browser extension. Local docker networks aren't supported — Lace cannot balance or sign transactions for the local `undeployed` chain. Use the CLI for any local iteration.
 
 ```bash
 cd zkloan-credit-scorer-ui
-npm run dev              # testnet
-npm run dev:standalone   # connect to the local docker network
-```
-
-Production build + preview:
-
-```bash
-npm run build            # builds testnet bundle
-npm run preview
+npm run dev              # dev server with hot reload
+npm run build            # production bundle
+npm run preview-build    # serve the built bundle locally
 ```
 
 Available at `http://localhost:5173` (dev) or `http://localhost:4173` (preview).
 
 **To connect:**
 
-1. Open the UI in your browser.
-2. In `testnet` mode, install the Midnight Lace wallet extension and connect it to the correct network. In `standalone` mode the UI talks directly to the local docker network and no browser wallet is needed.
-3. Paste the deployed contract address into "Contract Connection" and click Connect.
+1. Install the [Midnight Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) extension and set it to the **Preprod** network.
+2. Fund the wallet with tDUST from the Preprod faucet.
+3. Deploy a contract via `npm run preprod-remote` in the CLI and copy its address.
+4. Open the UI, click **Connect Lace wallet**, then paste the contract address into **01 · Contract** and click Connect.
 
 ### Project Structure
 

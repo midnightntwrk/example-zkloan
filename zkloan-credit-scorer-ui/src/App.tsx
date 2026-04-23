@@ -21,16 +21,32 @@ const App: React.FC = () => {
       {/* Hero */}
       <Box
         sx={{
-          mb: { xs: 7, md: 10 },
+          mb: { xs: 4, md: 5 },
           animation: 'reveal 700ms cubic-bezier(.2,.8,.2,1) both',
         }}
       >
         <Typography
           variant="overline"
-          sx={{ display: 'block', mb: 4, color: tokens.inkMuted }}
+          sx={{
+            display: 'block',
+            mb: 4,
+            color: tokens.inkMuted,
+            letterSpacing: '0.22em',
+          }}
         >
-          <Box component="span" sx={{ color: tokens.accent, mr: 1.5 }}>●</Box>
-          Privacy-preserving loans · Midnight Network · Ledger v8
+          <Box
+            component="span"
+            sx={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              backgroundColor: tokens.accent,
+              mr: 1.5,
+              verticalAlign: 'middle',
+            }}
+          />
+          Privacy-preserving loans · Midnight Preprod · Ledger v8
         </Typography>
 
         <Typography
@@ -69,34 +85,74 @@ const App: React.FC = () => {
           tenure stay on this device — only the verdict reaches the ledger.
         </Typography>
 
-        {/* Disclaimer as editorial aside */}
-        <Box
-          sx={{
-            borderLeft: `2px solid ${tokens.amber}`,
-            backgroundColor: `${tokens.amber}0a`,
-            pl: 2.5,
-            pr: 3,
-            py: 2,
-          }}
-        >
-          <Typography
-            variant="overline"
-            sx={{ display: 'block', color: tokens.amber, mb: 0.5 }}
-          >
-            Demonstration only
-          </Typography>
-          <Typography
+        {/* Asides */}
+        <Stack spacing={1.5}>
+          <Box
             sx={{
-              fontFamily: '"IBM Plex Sans", sans-serif',
-              fontSize: '0.88rem',
-              lineHeight: 1.55,
-              color: tokens.inkDim,
+              borderLeft: `2px solid ${tokens.cobalt}`,
+              backgroundColor: `${tokens.cobalt}0a`,
+              pl: 2.5,
+              pr: 3,
+              py: 2,
             }}
           >
-            A reference implementation showcasing Midnight's technology, not a real
-            lending service. Use it to learn the stack — not to apply for credit.
-          </Typography>
-        </Box>
+            <Typography
+              variant="overline"
+              sx={{ display: 'block', color: tokens.cobalt, mb: 0.5 }}
+            >
+              Preprod only
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: '"IBM Plex Sans", sans-serif',
+                fontSize: '0.88rem',
+                lineHeight: 1.55,
+                color: tokens.inkDim,
+              }}
+            >
+              This DApp requires the{' '}
+              <Link
+                href="https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk"
+                target="_blank"
+                rel="noopener"
+                sx={{ color: tokens.ink }}
+              >
+                Midnight Lace wallet
+              </Link>{' '}
+              set to <strong style={{ color: tokens.ink }}>Preprod</strong>, funded with
+              tDUST from the Preprod faucet. Local docker networks aren't supported by
+              Lace — for local iteration, use the CLI workspace instead.
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              borderLeft: `2px solid ${tokens.amber}`,
+              backgroundColor: `${tokens.amber}0a`,
+              pl: 2.5,
+              pr: 3,
+              py: 2,
+            }}
+          >
+            <Typography
+              variant="overline"
+              sx={{ display: 'block', color: tokens.amber, mb: 0.5 }}
+            >
+              Demonstration only
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: '"IBM Plex Sans", sans-serif',
+                fontSize: '0.88rem',
+                lineHeight: 1.55,
+                color: tokens.inkDim,
+              }}
+            >
+              A reference implementation showcasing Midnight's technology, not a real
+              lending service. Use it to learn the stack — not to apply for credit.
+            </Typography>
+          </Box>
+        </Stack>
       </Box>
 
       {/* Sections */}
@@ -180,18 +236,18 @@ const App: React.FC = () => {
           >
             Midnight
           </Link>
-          {' · '}Private by design
+          {' · '}Private by design · Preprod
         </Typography>
         <Typography
           sx={{
-            fontFamily: '"Fraunces", serif',
-            fontStyle: 'italic',
-            fontSize: '0.88rem',
+            fontFamily: '"IBM Plex Mono", monospace',
+            fontSize: '0.7rem',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
             color: tokens.inkMuted,
-            fontVariationSettings: '"opsz" 24, "SOFT" 80',
           }}
         >
-          A quiet proof of solvency.
+          v3.0
         </Typography>
       </Box>
     </MainLayout>

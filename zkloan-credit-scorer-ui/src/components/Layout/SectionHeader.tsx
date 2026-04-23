@@ -97,7 +97,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
         variant="h4"
         sx={{
           color: tokens.ink,
-          mb: children ? 1.5 : 0,
+          mb: children ? 2 : 0,
+          lineHeight: 1.18,
         }}
       >
         {title}
