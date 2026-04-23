@@ -15,6 +15,79 @@ import { useZKLoanContext } from '../hooks';
 import { SectionHeader } from './Layout/SectionHeader';
 import { tokens } from '../config/theme';
 
+// Walk the Error.cause chain and concatenate messages so the UI surfaces
+// the real failure rather than midnight-js's generic wrapper.
+function describeNonError(o: unknown): string {
+  if (o == null) return '';
+  if (typeof o === 'string') return o;
+  if (typeof o !== 'object') return String(o);
+  const anyObj = o as Record<string, unknown>;
+  // Common shapes from GraphQL, substrate, wallet, etc.
+  const candidates = [
+    anyObj.message,
+    anyObj.reason,
+    anyObj.error,
+    anyObj.errorMessage,
+    anyObj.description,
+    anyObj.data,
+  ].filter((v) => typeof v === 'string' && v.length);
+  if (candidates.length) return candidates[0] as string;
+  try {
+    const json = JSON.stringify(
+      o,
+      (_k, v) => (typeof v === 'bigint' ? v.toString() + 'n' : v),
+      2,
+    );
+    if (json && json !== '{}') return json;
+  } catch {
+    // fall through
+  }
+  return String(o);
+}
+
+function formatError(err: unknown): string {
+  const messages: string[] = [];
+  let current: unknown = err;
+  const seen = new Set<unknown>();
+  while (current && !seen.has(current)) {
+    seen.add(current);
+    if (current instanceof Error) {
+      if (current.message) messages.push(current.message);
+      current = (current as { cause?: unknown }).cause;
+      continue;
+    }
+    if (typeof current === 'object' && current !== null) {
+      const o = current as Record<string, unknown>;
+      // Effect.ts Cause wrapper: { _id: 'Cause', _tag: 'Fail', failure: {...} }
+      if (o._id === 'Cause' && o.failure) {
+        current = o.failure;
+        continue;
+      }
+      const msg = o.message ?? o.reason ?? o.errorMessage ?? o.description;
+      if (typeof msg === 'string' && msg.length) {
+        messages.push(msg);
+      }
+      if (o.cause !== undefined) {
+        current = o.cause;
+        continue;
+      }
+      const fallback = describeNonError(current);
+      if (!messages.length && fallback) messages.push(fallback);
+      break;
+    }
+    const text = describeNonError(current);
+    if (text) messages.push(text);
+    break;
+  }
+  if (messages.length === 0) return 'Failed to submit loan request';
+  // Dedupe consecutive duplicates
+  const out: string[] = [];
+  for (const m of messages) {
+    if (out[out.length - 1] !== m) out.push(m);
+  }
+  return out.join(' — ');
+}
+
 export const LoanRequestForm: React.FC = () => {
   const { requestLoan, flowMessage, secretPin } = useZKLoanContext();
 
@@ -55,9 +128,11 @@ export const LoanRequestForm: React.FC = () => {
       setResult({ success: true, message: 'Loan request submitted successfully.' });
       setAmount('');
     } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('requestLoan failed', error);
       setResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to submit loan request',
+        message: formatError(error),
       });
     } finally {
       setIsSubmitting(false);

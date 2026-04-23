@@ -261,7 +261,22 @@ export const MyLoans: React.FC = () => {
                     const profileDisplay = getProfileDisplay(loan.loanId);
 
                     return (
-                      <TableRow key={loan.loanId.toString()}>
+                      <TableRow
+                        key={loan.loanId.toString()}
+                        sx={{
+                          backgroundColor: isProposed
+                            ? `${tokens.amber}0f`
+                            : 'transparent',
+                          transition: 'background-color 220ms ease',
+                          position: 'relative',
+                          '& > td:first-of-type': isProposed
+                            ? {
+                                borderLeft: `2px solid ${tokens.amber}`,
+                                paddingLeft: '10px',
+                              }
+                            : {},
+                        }}
+                      >
                         <TableCell
                           sx={{
                             fontFamily: '"IBM Plex Mono", monospace',

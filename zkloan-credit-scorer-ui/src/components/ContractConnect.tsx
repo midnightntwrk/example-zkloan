@@ -14,6 +14,7 @@ import { useZKLoanContext } from '../hooks';
 import { type ZKLoanDeployment } from '../contexts';
 import { tokens } from '../config/theme';
 import { SectionHeader } from './Layout/SectionHeader';
+import { CopyButton } from './Layout/CopyButton';
 
 export const ContractConnect: React.FC = () => {
   const { deployment$, join, flowMessage } = useZKLoanContext();
@@ -55,6 +56,14 @@ export const ContractConnect: React.FC = () => {
       return `${hex.slice(0, 12)}…${hex.slice(-10)}`;
     }
     return 'Unknown';
+  };
+
+  const rawAddress = (addr: unknown): string => {
+    if (typeof addr === 'string') return addr;
+    if (addr instanceof Uint8Array) {
+      return Array.from(addr).map((b) => b.toString(16).padStart(2, '0')).join('');
+    }
+    return '';
   };
 
   return (
@@ -158,18 +167,32 @@ export const ContractConnect: React.FC = () => {
             >
               Address
             </Typography>
-            <Typography
-              component="code"
+            <Box
               sx={{
-                fontFamily: '"IBM Plex Mono", monospace',
-                fontSize: '0.9rem',
-                color: tokens.ink,
-                letterSpacing: '-0.01em',
-                wordBreak: 'break-all',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.25,
+                flex: 1,
+                minWidth: 0,
               }}
             >
-              {formatAddress(deployment.contractAddress)}
-            </Typography>
+              <Typography
+                component="code"
+                sx={{
+                  fontFamily: '"IBM Plex Mono", monospace',
+                  fontSize: '0.9rem',
+                  color: tokens.ink,
+                  letterSpacing: '-0.01em',
+                  wordBreak: 'break-all',
+                }}
+              >
+                {formatAddress(deployment.contractAddress)}
+              </Typography>
+              <CopyButton
+                value={rawAddress(deployment.contractAddress)}
+                label="Copy contract address"
+              />
+            </Box>
           </Box>
         )}
 

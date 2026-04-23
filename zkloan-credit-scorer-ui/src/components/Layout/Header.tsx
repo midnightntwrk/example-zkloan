@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Typography, Snackbar, Alert, CircularProgress } from '@mui/material';
 import { useZKLoanContext } from '../../hooks';
 import { tokens } from '../../config/theme';
+import { CopyButton } from './CopyButton';
 
 const mono = '"IBM Plex Mono", monospace';
 const serif = '"Fraunces", serif';
@@ -157,21 +158,28 @@ export const Header: React.FC = () => {
               >
                 Connected
               </Typography>
-              {truncatedAddress && (
-                <Typography
-                  component="span"
-                  sx={{
-                    fontFamily: mono,
-                    fontSize: '0.78rem',
-                    color: tokens.inkDim,
-                    letterSpacing: '0.02em',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {truncatedAddress}
-                </Typography>
+              {truncatedAddress && walletAddress && (
+                <>
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontFamily: mono,
+                      fontSize: '0.78rem',
+                      color: tokens.inkDim,
+                      letterSpacing: '0.02em',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {truncatedAddress}
+                  </Typography>
+                  <CopyButton
+                    value={walletAddress}
+                    label="Copy wallet address"
+                    size={22}
+                  />
+                </>
               )}
             </Box>
           ) : (

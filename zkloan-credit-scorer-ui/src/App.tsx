@@ -1,12 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Stack, Typography, Link } from '@mui/material';
-import { MainLayout, ContractConnect, PrivateStateCard, LoanRequestForm, MyLoans } from './components';
+import {
+  MainLayout,
+  ContractConnect,
+  PrivateStateCard,
+  LoanRequestForm,
+  MyLoans,
+  FlowStepper,
+  LaceGate,
+  type FlowStep,
+  type StepState,
+} from './components';
 import { useZKLoanContext } from './hooks';
 import { type ZKLoanDeployment } from './contexts';
 import { tokens } from './config/theme';
 
 const App: React.FC = () => {
-  const { deployment$ } = useZKLoanContext();
+  const {
+    deployment$,
+    isConnected: walletConnected,
+    secretPin,
+  } = useZKLoanContext();
   const [deployment, setDeployment] = useState<ZKLoanDeployment>({ status: 'idle' });
 
   useEffect(() => {
@@ -14,7 +28,36 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, [deployment$]);
 
-  const isConnected = deployment.status === 'deployed';
+  const contractConnected = deployment.status === 'deployed';
+  const pinSet = secretPin.length >= 4 && secretPin.length <= 6;
+
+  const stepState = (
+    done: boolean,
+    priorDone: boolean,
+  ): StepState => (done ? 'done' : priorDone ? 'current' : 'pending');
+
+  const steps: FlowStep[] = [
+    {
+      index: '01',
+      label: 'Wallet',
+      state: stepState(walletConnected, true),
+    },
+    {
+      index: '02',
+      label: 'Contract',
+      state: stepState(contractConnected, walletConnected),
+    },
+    {
+      index: '03',
+      label: 'PIN',
+      state: stepState(pinSet && contractConnected, contractConnected),
+    },
+    {
+      index: '04',
+      label: 'Request',
+      state: stepState(false, pinSet && contractConnected),
+    },
+  ];
 
   return (
     <MainLayout>
@@ -85,116 +128,95 @@ const App: React.FC = () => {
           tenure stay on this device — only the verdict reaches the ledger.
         </Typography>
 
-        {/* Asides */}
-        <Stack spacing={1.5}>
-          <Box
-            sx={{
-              borderLeft: `2px solid ${tokens.cobalt}`,
-              backgroundColor: `${tokens.cobalt}0a`,
-              pl: 2.5,
-              pr: 3,
-              py: 2,
-            }}
-          >
-            <Typography
-              variant="overline"
-              sx={{ display: 'block', color: tokens.cobalt, mb: 0.5 }}
-            >
-              Preprod only
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: '"IBM Plex Sans", sans-serif',
-                fontSize: '0.88rem',
-                lineHeight: 1.55,
-                color: tokens.inkDim,
-              }}
-            >
-              This DApp requires the{' '}
-              <Link
-                href="https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk"
-                target="_blank"
-                rel="noopener"
-                sx={{ color: tokens.ink }}
-              >
-                Midnight Lace wallet
-              </Link>{' '}
-              set to <strong style={{ color: tokens.ink }}>Preprod</strong>, funded with
-              tDUST from the Preprod faucet. Local docker networks aren't supported by
-              Lace — for local iteration, use the CLI workspace instead.
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              borderLeft: `2px solid ${tokens.amber}`,
-              backgroundColor: `${tokens.amber}0a`,
-              pl: 2.5,
-              pr: 3,
-              py: 2,
-            }}
-          >
-            <Typography
-              variant="overline"
-              sx={{ display: 'block', color: tokens.amber, mb: 0.5 }}
-            >
-              Demonstration only
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: '"IBM Plex Sans", sans-serif',
-                fontSize: '0.88rem',
-                lineHeight: 1.55,
-                color: tokens.inkDim,
-              }}
-            >
-              A reference implementation showcasing Midnight's technology, not a real
-              lending service. Use it to learn the stack — not to apply for credit.
-            </Typography>
-          </Box>
-        </Stack>
-      </Box>
-
-      {/* Sections */}
-      <Stack
-        spacing={4}
-        sx={{
-          '& > *': {
-            animation: 'reveal 700ms cubic-bezier(.2,.8,.2,1) both',
-          },
-          '& > *:nth-of-type(1)': { animationDelay: '120ms' },
-          '& > *:nth-of-type(2)': { animationDelay: '220ms' },
-        }}
-      >
-        <ContractConnect />
-
+        {/* Requirements strip */}
         <Box
           sx={{
-            opacity: isConnected ? 1 : 0.38,
-            filter: isConnected ? 'none' : 'saturate(0.4)',
-            pointerEvents: isConnected ? 'auto' : 'none',
-            transition: 'opacity 420ms ease, filter 420ms ease',
-            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            py: 1.25,
+            px: 0,
+            borderTop: `1px solid ${tokens.hairline}`,
+            borderBottom: `1px solid ${tokens.hairline}`,
+            flexWrap: 'wrap',
           }}
         >
-          {!isConnected && (
-            <Box
-              aria-hidden
-              sx={{
-                position: 'absolute',
-                inset: 0,
-                zIndex: 10,
-                cursor: 'not-allowed',
-              }}
-            />
-          )}
-          <Stack spacing={4}>
-            <PrivateStateCard />
-            <LoanRequestForm />
-            <MyLoans />
-          </Stack>
+          <Typography
+            variant="overline"
+            sx={{ color: tokens.cobalt, flexShrink: 0 }}
+          >
+            Requires
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: '"IBM Plex Sans", sans-serif',
+              fontSize: '0.85rem',
+              color: tokens.inkDim,
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <Link
+              href="https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk"
+              target="_blank"
+              rel="noopener"
+              sx={{ color: tokens.ink }}
+            >
+              Midnight Lace
+            </Link>{' '}
+            on <Box component="span" sx={{ color: tokens.ink, fontWeight: 500 }}>Preprod</Box>
+            , funded with tDUST
+          </Typography>
         </Box>
-      </Stack>
+      </Box>
+
+      <LaceGate>
+        {/* Progress */}
+        <Box sx={{ mb: { xs: 4, md: 5 } }}>
+          <FlowStepper steps={steps} />
+        </Box>
+
+        {/* Sections */}
+        <Stack
+          spacing={4}
+          sx={{
+            '& > *': {
+              animation: 'reveal 700ms cubic-bezier(.2,.8,.2,1) both',
+            },
+            '& > *:nth-of-type(1)': { animationDelay: '120ms' },
+            '& > *:nth-of-type(2)': { animationDelay: '220ms' },
+          }}
+        >
+          <ContractConnect />
+
+          <Box
+            sx={{
+              opacity: contractConnected ? 1 : 0.38,
+              filter: contractConnected ? 'none' : 'saturate(0.4)',
+              pointerEvents: contractConnected ? 'auto' : 'none',
+              transition: 'opacity 420ms ease, filter 420ms ease',
+              position: 'relative',
+            }}
+          >
+            {!contractConnected && (
+              <Box
+                aria-hidden
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 10,
+                  cursor: 'not-allowed',
+                }}
+              />
+            )}
+            <Stack spacing={4}>
+              <PrivateStateCard />
+              <LoanRequestForm />
+              <MyLoans />
+            </Stack>
+          </Box>
+        </Stack>
+      </LaceGate>
 
       {/* Colophon */}
       <Box
@@ -202,6 +224,37 @@ const App: React.FC = () => {
           mt: { xs: 10, md: 14 },
           pt: 4,
           borderTop: `1px solid ${tokens.hairline}`,
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: '"IBM Plex Sans", sans-serif',
+            fontSize: '0.82rem',
+            lineHeight: 1.55,
+            color: tokens.inkMuted,
+            mb: 2.5,
+            maxWidth: 720,
+          }}
+        >
+          <Box
+            component="span"
+            sx={{
+              fontFamily: '"IBM Plex Mono", monospace',
+              fontSize: '0.68rem',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: tokens.amber,
+              mr: 1.25,
+            }}
+          >
+            Demo ·
+          </Box>
+          Reference implementation showcasing Midnight's technology — not a real lending service.
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',

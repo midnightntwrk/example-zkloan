@@ -24,13 +24,14 @@ export function generateKeyPair(): { sk: bigint; pk: JubjubPoint } {
 }
 
 export function getPublicKey(sk: bigint): JubjubPoint {
-  return ecMulGenerator(sk);
+  return ecMulGenerator(((sk % JUBJUB_ORDER) + JUBJUB_ORDER) % JUBJUB_ORDER);
 }
 
 export function sign(
   sk: bigint,
   msg: bigint[],
 ): SchnorrSignature {
+  sk = ((sk % JUBJUB_ORDER) + JUBJUB_ORDER) % JUBJUB_ORDER;
   const pk = ecMulGenerator(sk);
   const k = randomScalar();
   const R = ecMulGenerator(k);
