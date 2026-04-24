@@ -33,6 +33,8 @@ The project targets ledger v8 and the 4.x Midnight JS SDK. See [Midnight's compa
 | Indexer image | `midnightntwrk/indexer-standalone:4.0.1` |
 | Node image | `midnightntwrk/midnight-node:0.22.3` |
 
+You'll end up with up to four terminals running at once: docker network, attestation API, CLI, UI. Follow the steps in order and each one produces what the next one needs.
+
 ### 1. Install dependencies
 
 From the repo root:
@@ -59,11 +61,33 @@ Optional — run the contract test suite:
 npm test
 ```
 
-### 3. Start the local standalone network
+### 3. Configure the CLI environment
+
+Before running the CLI, set the storage password. The level-private-state-provider encrypts the contract's private state (credit score, income, attestation signature) on disk; without a valid password, the CLI fails on startup.
+
+```bash
+cd zkloan-credit-scorer-cli
+cp .env.example .env
+# Edit .env and set MIDNIGHT_STORAGE_PASSWORD
+```
+
+Password rules (enforced by v4 of the provider):
+
+- ≥ 16 characters
+- At least 3 of: uppercase, lowercase, digits, special chars
+- No 4+ repeated identical chars in a row
+- No 4+ sequential char codes (e.g. `abcd`, `1234`)
+
+Losing this password means losing access to the encrypted private state on disk — the provider has no recovery mechanism.
+
+### 4. Start the local standalone network (for local runs)
+
+If you only plan to use the remote **Preprod** flow, skip to step 5.
 
 The standalone flow runs node + indexer + proof server locally via Docker Compose. The project ships a [`standalone.yml`](zkloan-credit-scorer-cli/standalone.yml) pinned to the versions above.
 
 ```bash
+# Terminal A
 cd zkloan-credit-scorer-cli
 docker compose -f standalone.yml up -d
 ```
@@ -76,16 +100,65 @@ Services come up on:
 
 Wait ~15–20s for the node to become healthy (`docker compose -f standalone.yml ps`).
 
-### 4. Run the CLI against the local network
+### 5. Start the attestation API
+
+The attestation API signs credit data with a Schnorr signature on Jubjub; the contract verifies this signature inside the ZK circuit before processing a loan. **The CLI and UI both depend on this service being available — start it in its own terminal and leave it running.**
 
 ```bash
+# Terminal B — fresh terminal, leave it open
+cd zkloan-credit-scorer-attestation-api
+PROVIDER_SECRET_KEY="$(node -e 'console.log(require(\"crypto\").randomBytes(32).toString(\"hex\"))')" \
+PORT=4000 \
+npm run dev
+```
+
+On startup it prints three values you'll need in step 6:
+
+- `Provider ID` (default `1`)
+- `Provider public key x`
+- `Provider public key y`
+
+Persisting `PROVIDER_SECRET_KEY` matters — every API restart without it generates a new Jubjub key, invalidating any on-chain registration. Save the generated hex somewhere safe (e.g. into a `.env` in this workspace) so you can reuse it.
+
+See [Attestation Service reference](#attestation-service) for the full env-var list.
+
+### 6. Run the CLI
+
+You have two options. Both use the `.env` from step 3.
+
+#### Option A — Standalone (local docker)
+
+Requires step 4.
+
+```bash
+# Terminal C
 cd zkloan-credit-scorer-cli
 npm run standalone
 ```
 
-The CLI uses a pre-funded hex seed against the local undeployed network, so no faucet or wallet extension is required.
+The CLI uses a pre-funded hex seed against the local `undeployed` network, so no faucet or wallet extension is required.
 
-On first run it prompts with:
+#### Option B — Preprod (remote)
+
+Requires a BIP39 mnemonic for a Preprod wallet funded with tDUST from the Preprod faucet. You **also need a local proof server running on port 6300** (already running if you did step 4; otherwise spin one up with `docker run --rm -p 6300:6300 midnightntwrk/proof-server:8.0.3 midnight-proof-server -v`).
+
+Add the mnemonic to your CLI `.env`:
+
+```bash
+WALLET_MNEMONIC="<24-word BIP39 mnemonic>"
+```
+
+Then:
+
+```bash
+# Terminal C
+cd zkloan-credit-scorer-cli
+npm run preprod-remote
+```
+
+#### CLI menu — first actions
+
+After the wallet syncs, the menu prompts:
 
 ```
 1. Deploy a new ZKLoan Credit Scorer contract
@@ -93,47 +166,18 @@ On first run it prompts with:
 3. Exit
 ```
 
-After deploying or joining you can request loans, respond to proposals, change PIN, display state, and run admin actions. **Save the deployed contract address** if you want to connect the UI to it.
+Do the following **in order** on a fresh contract:
 
-#### Required env var: `MIDNIGHT_STORAGE_PASSWORD`
+1. **Deploy** (option 1). Save the printed contract address — the UI needs it, and so does any subsequent CLI session via option 2.
+2. **Register the attestation provider** (admin menu → option 8). Paste the `Provider ID`, `x`, and `y` values printed by the attestation API in step 5. Without this, every loan request will fail inside `evaluateApplicant` because the circuit asserts the provider is registered.
+3. From there you can request loans, respond to proposals, change PIN, display state, and run the other admin actions.
 
-The level-private-state-provider encrypts the contract's private state (credit score, income, attestation signature) on disk. v4 of the provider enforces:
+### 7. Run the UI (Preprod only)
 
-- ≥ 16 characters
-- At least 3 of: uppercase, lowercase, digits, special chars
-- No 4+ repeated identical chars in a row
-- No 4+ sequential char codes (e.g. `abcd`, `1234`)
-
-Set it in [`zkloan-credit-scorer-cli/.env`](zkloan-credit-scorer-cli/.env):
+The UI runs **only against Midnight Preprod** via the Midnight Lace browser extension. Local docker networks aren't supported — Lace cannot balance or sign transactions for the local `undeployed` chain. Use the CLI for any local iteration.
 
 ```bash
-MIDNIGHT_STORAGE_PASSWORD="<a strong 16+ char password>"
-# Optional — if unset, a random hex seed is used:
-# WALLET_MNEMONIC="<24-word BIP39 mnemonic>"
-```
-
-Losing this password means losing access to encrypted private state on disk — the provider has no recovery mechanism.
-
-### 5. Run against Preprod (optional)
-
-If you want to deploy against the Preprod network instead of the local standalone:
-
-```bash
-cd zkloan-credit-scorer-cli
-npm run preprod-remote
-```
-
-Requirements:
-
-- `WALLET_MNEMONIC` in `.env`
-- tDUST in that wallet — use the Midnight faucet for Preprod
-- `MIDNIGHT_STORAGE_PASSWORD` as above
-
-### 6. Run the UI
-
-The UI runs **only against the Midnight Preprod network** via the Midnight Lace browser extension. Local docker networks aren't supported — Lace cannot balance or sign transactions for the local `undeployed` chain. Use the CLI for any local iteration.
-
-```bash
+# Terminal D
 cd zkloan-credit-scorer-ui
 npm run dev              # dev server with hot reload
 npm run build            # production bundle
@@ -146,8 +190,9 @@ Available at `http://localhost:5173` (dev) or `http://localhost:4173` (preview).
 
 1. Install the [Midnight Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) extension and set it to the **Preprod** network.
 2. Fund the wallet with tDUST from the Preprod faucet.
-3. Deploy a contract via `npm run preprod-remote` in the CLI and copy its address.
+3. Make sure steps 5 and 6 (Preprod option) have already run — the attestation API is up, a Preprod contract is deployed, and the provider is registered on it.
 4. Open the UI, click **Connect Lace wallet**, then paste the contract address into **01 · Contract** and click Connect.
+5. Wait for Lace to finish syncing (the extension shows a `Wallet syncing (…%)` banner until it's done) before submitting a loan — mid-sync submissions fail with a generic "Transaction submission failed" error.
 
 ### Project Structure
 
@@ -186,36 +231,16 @@ zkloan-credit-scorer/
 
 The attestation API is a trusted third-party service that signs credit data using Schnorr signatures on the Jubjub curve. The smart contract verifies these signatures inside the ZK circuit before processing loan applications, ensuring credit data cannot be fabricated by a malicious DApp.
 
-#### Setup Flow
+Startup is covered in [Step 5 — Start the attestation API](#5-start-the-attestation-api) above. This section is a reference.
 
-1. **Start the attestation API:**
-   ```bash
-   cd zkloan-credit-scorer-attestation-api
-   npm run dev
-   ```
-
-2. **Register the provider on-chain** (admin only):
-   ```
-   # Use the public key printed at API startup
-   registerProvider(providerId, providerPublicKey)
-   ```
-
-3. **Request attestation** (from your DApp):
-   ```bash
-   curl -X POST http://localhost:3000/attest \
-     -H "Content-Type: application/json" \
-     -d '{"creditScore":720,"monthlyIncome":2500,"monthsAsCustomer":24,"userPubKeyHash":"..."}'
-   ```
-
-4. **Apply for loan** using the attestation signature in private state
-
-#### Environment Variables
+#### Environment variables
 
 | Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | API server port | `3000` |
-| `PROVIDER_ID` | Provider identifier (registered on-chain) | `1` |
-| `PROVIDER_SECRET_KEY` | Provider signing key (hex) | Auto-generated |
+|---|---|---|
+| `PORT` | API server port | `4000` |
+| `PROVIDER_ID` | Provider identifier (registered on-chain with admin menu option 8) | `1` |
+| `PROVIDER_SECRET_KEY` | Provider signing key (32-byte hex). **Persist this across restarts** — each run without it generates a new Jubjub key and invalidates any on-chain registration | Random per run |
+| `NETWORK_ID` | Network ID set on startup | `undeployed` |
 
 ---
 
