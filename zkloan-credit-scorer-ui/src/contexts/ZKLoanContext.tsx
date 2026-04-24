@@ -88,6 +88,7 @@ export interface ZKLoanAPIProvider {
   readonly join: (contractAddress: ContractAddress) => void;
   readonly requestLoan: (amount: bigint) => Promise<void>;
   readonly respondToLoan: (loanId: bigint, accept: boolean) => Promise<void>;
+  readonly changePin: (oldPin: bigint, newPin: bigint) => Promise<void>;
   readonly refreshLoans: () => Promise<void>;
   readonly getMyLoans: () => Promise<UserLoan[]>;
   readonly lastLoanUpdate: number;
@@ -628,6 +629,33 @@ export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger
     setLastLoanUpdate(Date.now());
   }, [providersRef, compiledContractRef, contractAddressRef, logger, secretPin]);
 
+  const changePinTx = useCallback(async (oldPin: bigint, newPin: bigint) => {
+    if (!providersRef || !compiledContractRef || !contractAddressRef) {
+      throw new Error('Contract not deployed. Please deploy or join a contract first.');
+    }
+    if (oldPin === newPin) {
+      throw new Error('Old and new PIN must differ.');
+    }
+
+    setFlowMessage('Changing PIN on-chain (this migrates up to 5 loans per batch)...');
+    logger.info(`Changing PIN: ${oldPin} -> ${newPin}`);
+
+    const finalizedTxData = await submitCallTx(providersRef, {
+      compiledContract: compiledContractRef,
+      contractAddress: contractAddressRef,
+      circuitId: 'changePin' as ZKLoanCircuitKeys,
+      args: [oldPin, newPin] as [bigint, bigint],
+      privateStateId: 'zkLoanCreditScorerPrivateState',
+    });
+
+    setFlowMessage(undefined);
+    logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
+
+    // Local state follows the new PIN so subsequent actions use the right key
+    setSecretPin(newPin.toString());
+    setLastLoanUpdate(Date.now());
+  }, [providersRef, compiledContractRef, contractAddressRef, logger]);
+
   const getMyLoans = useCallback(async (): Promise<UserLoan[]> => {
     if (!publicDataProviderRef || !contractAddressRef || !walletPublicKeyBytes) {
       logger.warn('Cannot get loans: missing provider, contract address, or wallet public key');
@@ -746,6 +774,7 @@ export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger
     join: joinExistingContract,
     requestLoan: requestLoanTx,
     respondToLoan: respondToLoanTx,
+    changePin: changePinTx,
     refreshLoans,
     getMyLoans,
     lastLoanUpdate,
