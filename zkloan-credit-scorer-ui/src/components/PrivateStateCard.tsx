@@ -12,7 +12,6 @@ import {
   Button,
   Stack,
   Alert,
-  CircularProgress,
 } from '@mui/material';
 import { useZKLoanContext } from '../hooks';
 import { userProfiles } from '../utils/loanProfiles';
@@ -113,13 +112,9 @@ export const PrivateStateCard: React.FC = () => {
     secretPin,
     setSecretPin,
     refreshLoans,
-    changePin,
   } = useZKLoanContext();
   const [selectedProfile, setSelectedProfile] = React.useState(0);
   const [savedPin, setSavedPin] = useState<string | null>(null);
-  const [showChangePin, setShowChangePin] = useState(false);
-  const [newPin, setNewPin] = useState('');
-  const [isChangingPin, setIsChangingPin] = useState(false);
   const [pinMessage, setPinMessage] = useState<{ tone: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   const currentProfile = userProfiles[selectedProfile];
@@ -146,61 +141,30 @@ export const PrivateStateCard: React.FC = () => {
     setCurrentProfileId(profile.applicantId);
   };
 
+  // Contract uses Uint<16> for the PIN (max 65535). We keep the UI cap at
+  // 4 digits to avoid users entering a valid-looking 5/6-digit number that
+  // overflows the circuit type at submission time.
+  const MAX_PIN_DIGITS = 4;
+
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    const value = e.target.value.replace(/\D/g, '').slice(0, MAX_PIN_DIGITS);
     setSecretPin(value);
-    // Clear stale confirmation if the user is editing
     if (savedPin !== null && value !== savedPin) {
       setPinMessage(null);
     }
-  };
-
-  const handleNewPinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewPin(e.target.value.replace(/\D/g, '').slice(0, 6));
   };
 
   const handleSavePin = () => {
     setSavedPin(secretPin);
     setPinMessage({
       tone: 'success',
-      text: 'PIN saved locally. It will be used to derive your identity when you request or respond to a loan.',
+      text:
+        'PIN saved locally. It never leaves this device — it is hashed into the public key used on-chain.',
     });
     refreshLoans();
   };
 
-  const handleChangePin = async () => {
-    if (!savedPin) return;
-    if (newPin === savedPin) {
-      setPinMessage({ tone: 'error', text: 'New PIN must differ from the current PIN.' });
-      return;
-    }
-    if (newPin.length < 4 || newPin.length > 6) {
-      setPinMessage({ tone: 'error', text: 'New PIN must be 4–6 digits.' });
-      return;
-    }
-    setIsChangingPin(true);
-    setPinMessage({ tone: 'info', text: 'Submitting on-chain PIN migration…' });
-    try {
-      await changePin(BigInt(savedPin), BigInt(newPin));
-      setSavedPin(newPin);
-      setNewPin('');
-      setShowChangePin(false);
-      setPinMessage({
-        tone: 'success',
-        text:
-          'PIN change submitted. On-chain migration moves up to 5 loans per call — if you had more, click Change PIN again to continue.',
-      });
-    } catch (err) {
-      setPinMessage({
-        tone: 'error',
-        text: `PIN change failed: ${err instanceof Error ? err.message : String(err)}`,
-      });
-    } finally {
-      setIsChangingPin(false);
-    }
-  };
-
-  const isPinValid = secretPin.length >= 4 && secretPin.length <= 6;
+  const isPinValid = secretPin.length >= 4 && secretPin.length <= MAX_PIN_DIGITS;
   const isSaved = savedPin !== null && savedPin === secretPin;
 
   return (
@@ -259,13 +223,13 @@ export const PrivateStateCard: React.FC = () => {
             fullWidth
             size="small"
             label="Secret PIN"
-            placeholder="4–6 digits"
+            placeholder="4 digits"
             type="text"
             inputMode="numeric"
             value={secretPin}
             onChange={handlePinChange}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ maxLength: 6, autoComplete: 'off' }}
+            inputProps={{ maxLength: MAX_PIN_DIGITS, autoComplete: 'off' }}
           />
 
           <Button
@@ -286,79 +250,6 @@ export const PrivateStateCard: React.FC = () => {
           >
             {pinMessage.text}
           </Alert>
-        )}
-
-        {isSaved && (
-          <Box sx={{ mt: 2 }}>
-            {!showChangePin ? (
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => setShowChangePin(true)}
-                sx={{
-                  px: 0,
-                  color: tokens.inkDim,
-                  fontFamily: '"IBM Plex Mono", monospace',
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Change PIN on-chain →
-              </Button>
-            ) : (
-              <Stack
-                direction={{ xs: 'column', md: 'row' }}
-                spacing={1.5}
-                alignItems={{ xs: 'stretch', md: 'center' }}
-                sx={{
-                  pt: 3,
-                  borderTop: `1px solid ${tokens.hairline}`,
-                }}
-              >
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="New PIN"
-                  placeholder="4–6 digits"
-                  type="text"
-                  inputMode="numeric"
-                  value={newPin}
-                  onChange={handleNewPinChange}
-                  InputLabelProps={{ shrink: true }}
-                  inputProps={{ maxLength: 6, autoComplete: 'off' }}
-                  disabled={isChangingPin}
-                />
-                <Button
-                  variant="contained"
-                  onClick={handleChangePin}
-                  disabled={isChangingPin || newPin.length < 4 || newPin === savedPin}
-                  sx={{ minWidth: 160, whiteSpace: 'nowrap' }}
-                >
-                  {isChangingPin ? (
-                    <>
-                      <CircularProgress size={14} thickness={4} sx={{ color: 'inherit', mr: 1 }} />
-                      Migrating…
-                    </>
-                  ) : (
-                    'Change PIN →'
-                  )}
-                </Button>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => {
-                    setShowChangePin(false);
-                    setNewPin('');
-                  }}
-                  disabled={isChangingPin}
-                  sx={{ color: tokens.inkMuted }}
-                >
-                  Cancel
-                </Button>
-              </Stack>
-            )}
-          </Box>
         )}
 
         {/* Stats grid — editorial */}
