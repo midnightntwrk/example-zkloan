@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma language_version 0.21;
+pragma language_version 0.22;
 import CompactStandardLibrary;
 import "schnorr" prefix Schnorr_;
 
@@ -42,7 +42,7 @@ export ledger blacklist: Set<ZswapCoinPublicKey>;
 export ledger loans: Map<Bytes<32>, Map<Uint<16>, LoanApplication>>;
 export ledger onGoingPinMigration: Map<Bytes<32>, Uint<16>>;
 export ledger admin: ZswapCoinPublicKey;
-export ledger providers: Map<Uint<16>, NativePoint>;
+export ledger providers: Map<Uint<16>, JubjubPoint>;
 
 witness getAttestedScoringWitness(): [Applicant, Schnorr_SchnorrSignature, Uint<16>];
 
@@ -155,7 +155,7 @@ export circuit removeBlacklistUser(account: ZswapCoinPublicKey): [] {
     return [];
 }
 
-export circuit registerProvider(providerId: Uint<16>, providerPk: NativePoint): [] {
+export circuit registerProvider(providerId: Uint<16>, providerPk: JubjubPoint): [] {
     assert(ownPublicKey() == admin, "Only admin can register providers");
     providers.insert(disclose(providerId), disclose(providerPk));
     return [];

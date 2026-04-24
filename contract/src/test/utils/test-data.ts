@@ -4,7 +4,7 @@
 
 import { type ZKLoanCreditScorerPrivateState } from '../../witnesses.js';
 import { pureCircuits, type SchnorrSignature } from '../../managed/zkloan-credit-scorer/contract/index.js';
-import { ecMulGenerator, addField, mulField, type NativePoint } from '@midnight-ntwrk/compact-runtime';
+import { ecMulGenerator, addField, mulField, type JubjubPoint } from '@midnight-ntwrk/compact-runtime';
 import * as crypto from 'crypto';
 
 export const userProfiles = [
@@ -79,7 +79,7 @@ function randomScalar(): bigint {
   return val % JUBJUB_ORDER;
 }
 
-export function generateProviderKeyPair(): { sk: bigint; pk: NativePoint } {
+export function generateProviderKeyPair(): { sk: bigint; pk: JubjubPoint } {
   const sk = randomScalar();
   const pk = ecMulGenerator(sk);
   return { sk, pk };

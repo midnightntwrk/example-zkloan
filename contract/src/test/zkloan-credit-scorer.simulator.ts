@@ -18,7 +18,7 @@ import {
   createConstructorContext,
   createCircuitContext,
   sampleContractAddress,
-  type NativePoint,
+  type JubjubPoint,
   transientHash,
   CompactTypeBytes,
 } from "@midnight-ntwrk/compact-runtime";
@@ -38,7 +38,7 @@ export class ZKLoanCreditScorerSimulator {
   readonly contract: Contract<ZKLoanCreditScorerPrivateState>;
   circuitContext: CircuitContext<ZKLoanCreditScorerPrivateState>;
   readonly providerSk: bigint;
-  readonly providerPk: NativePoint;
+  readonly providerPk: JubjubPoint;
   readonly providerId: bigint = 1n;
 
   constructor() {
@@ -142,7 +142,7 @@ export class ZKLoanCreditScorerSimulator {
     return ledger(this.circuitContext.currentQueryContext.state);
   }
 
-  public registerProvider(providerId: bigint, providerPk: NativePoint): Ledger {
+  public registerProvider(providerId: bigint, providerPk: JubjubPoint): Ledger {
     this.circuitContext = this.contract.impureCircuits.registerProvider(
       this.circuitContext,
       providerId,

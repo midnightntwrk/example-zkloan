@@ -16,7 +16,7 @@
 import 'dotenv/config';
 import { type ContractAddress, transientHash, CompactTypeBytes } from '@midnight-ntwrk/compact-runtime';
 import { ZKLoanCreditScorer, type ZKLoanCreditScorerPrivateState, witnesses } from 'zkloan-credit-scorer-contract';
-import * as ledger from '@midnight-ntwrk/ledger-v7';
+import * as ledger from '@midnight-ntwrk/ledger-v8';
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
@@ -395,7 +395,7 @@ export const registerNightForDust = async (walletContext: WalletContext): Promis
     logger.info('No unshielded Night UTXOs available for dust registration, or all are already registered');
 
     // Check current dust balance
-    const dustBalance = state.dust?.walletBalance(new Date()) ?? 0n;
+    const dustBalance = state.dust?.balance(new Date()) ?? 0n;
     logger.info(`Current dust balance: ${dustBalance}`);
 
     return dustBalance > 0n;
@@ -424,10 +424,10 @@ export const registerNightForDust = async (walletContext: WalletContext): Promis
       walletContext.wallet.state().pipe(
         Rx.throttleTime(5_000),
         Rx.tap((s) => {
-          const dustBalance = s.dust?.walletBalance(new Date()) ?? 0n;
+          const dustBalance = s.dust?.balance(new Date()) ?? 0n;
           logger.info(`Dust balance: ${dustBalance}`);
         }),
-        Rx.filter((s) => (s.dust?.walletBalance(new Date()) ?? 0n) > 0n),
+        Rx.filter((s) => (s.dust?.balance(new Date()) ?? 0n) > 0n),
       ),
     );
 
@@ -519,16 +519,23 @@ export const initWalletWithSeed = async (
     relayURL,
   };
 
-  const shieldedWallet = ShieldedWallet(shieldedConfig).startWithSecretKeys(shieldedSecretKeys);
-  const unshieldedWallet = UnshieldedWallet(unshieldedConfig).startWithPublicKey(
-    UnshieldedPublicKey.fromKeyStore(unshieldedKeystore),
-  );
-  const dustWallet = DustWallet(dustConfig).startWithSecretKey(
-    dustSecretKey,
-    ledger.LedgerParameters.initialParameters().dust,
-  );
+  const unifiedConfig = {
+    ...shieldedConfig,
+    ...unshieldedConfig,
+    ...dustConfig,
+  };
 
-  const facade: WalletFacade = new WalletFacade(shieldedWallet, unshieldedWallet, dustWallet);
+  const facade = await WalletFacade.init({
+    configuration: unifiedConfig,
+    shielded: () => ShieldedWallet(shieldedConfig).startWithSecretKeys(shieldedSecretKeys),
+    unshielded: () => UnshieldedWallet(unshieldedConfig).startWithPublicKey(
+      UnshieldedPublicKey.fromKeyStore(unshieldedKeystore),
+    ),
+    dust: () => DustWallet(dustConfig).startWithSecretKey(
+      dustSecretKey,
+      ledger.LedgerParameters.initialParameters().dust,
+    ),
+  });
   await facade.start(shieldedSecretKeys, dustSecretKey);
 
   return { wallet: facade, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
@@ -620,8 +627,13 @@ export const configureProviders = async (walletContext: WalletContext, config: C
 
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(walletContext);
 
-  // Get storage password from env or use a default
-  const storagePassword = process.env.MIDNIGHT_STORAGE_PASSWORD ?? 'zkloan-credit-scorer-default-password';
+  const storagePassword = process.env.MIDNIGHT_STORAGE_PASSWORD;
+  if (!storagePassword) {
+    throw new Error(
+      'MIDNIGHT_STORAGE_PASSWORD is not set. Set it in zkloan-credit-scorer-cli/.env (see .env.example). ' +
+      'The level-private-state-provider requires it to encrypt private state on disk.'
+    );
+  }
 
   const zkConfigProvider = new NodeZkConfigProvider<ZKLoanCreditScorerCircuits>(contractConfig.zkConfigPath);
 
@@ -629,6 +641,7 @@ export const configureProviders = async (walletContext: WalletContext, config: C
     privateStateProvider: levelPrivateStateProvider<typeof ZKLoanCreditScorerPrivateStateId>({
       privateStateStoreName: contractConfig.privateStateStoreName,
       privateStoragePasswordProvider: () => storagePassword,
+      accountId: walletContext.unshieldedKeystore.getBech32Address().asString(),
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
     zkConfigProvider,

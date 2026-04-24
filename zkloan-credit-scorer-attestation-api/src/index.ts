@@ -7,10 +7,15 @@ setNetworkId(process.env.NETWORK_ID || 'undeployed');
 const PORT = parseInt(process.env.PORT || '4000', 10);
 const PROVIDER_ID = parseInt(process.env.PROVIDER_ID || '1', 10);
 
+// Jubjub scalar field order — the generator's scalar must be reduced mod this
+// or ecMulGenerator throws "out of bounds for prime field".
+const JUBJUB_ORDER = 6554484396890773809930967563523245729705921265872317281365359162392183254199n;
+
 let providerSk: bigint;
 
 if (process.env.PROVIDER_SECRET_KEY) {
-  providerSk = BigInt('0x' + process.env.PROVIDER_SECRET_KEY);
+  const raw = BigInt('0x' + process.env.PROVIDER_SECRET_KEY);
+  providerSk = raw % JUBJUB_ORDER;
   console.log('Loaded provider secret key from environment');
 } else {
   const keyPair = generateKeyPair();

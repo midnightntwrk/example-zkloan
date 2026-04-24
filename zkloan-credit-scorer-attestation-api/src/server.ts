@@ -1,7 +1,7 @@
 import restify from 'restify';
 import { signCreditData, getPublicKey } from './signing.js';
 import type { AttestationRequest, AttestationResponse, ProviderInfoResponse, HealthResponse } from './types.js';
-import type { NativePoint } from '@midnight-ntwrk/compact-runtime';
+import type { JubjubPoint } from '@midnight-ntwrk/compact-runtime';
 
 export function createServer(providerSk: bigint, providerId: number): restify.Server {
   const server = restify.createServer({ name: 'zkloan-attestation-api' });
@@ -19,7 +19,7 @@ export function createServer(providerSk: bigint, providerId: number): restify.Se
     return next();
   });
 
-  const providerPk: NativePoint = getPublicKey(providerSk);
+  const providerPk: JubjubPoint = getPublicKey(providerSk);
 
   server.post('/attest', (req: restify.Request, res: restify.Response, next: restify.Next) => {
     try {

@@ -1,9 +1,9 @@
-import { ecMulGenerator, type NativePoint } from '@midnight-ntwrk/compact-runtime';
+import { ecMulGenerator, type JubjubPoint } from '@midnight-ntwrk/compact-runtime';
 import { ZKLoanCreditScorer } from 'zkloan-credit-scorer-contract';
 const { pureCircuits } = ZKLoanCreditScorer;
 
 type SchnorrSignature = {
-  announcement: NativePoint;
+  announcement: JubjubPoint;
   response: bigint;
 };
 import * as crypto from 'crypto';
@@ -17,20 +17,21 @@ function randomScalar(): bigint {
   return val % JUBJUB_ORDER;
 }
 
-export function generateKeyPair(): { sk: bigint; pk: NativePoint } {
+export function generateKeyPair(): { sk: bigint; pk: JubjubPoint } {
   const sk = randomScalar();
   const pk = ecMulGenerator(sk);
   return { sk, pk };
 }
 
-export function getPublicKey(sk: bigint): NativePoint {
-  return ecMulGenerator(sk);
+export function getPublicKey(sk: bigint): JubjubPoint {
+  return ecMulGenerator(((sk % JUBJUB_ORDER) + JUBJUB_ORDER) % JUBJUB_ORDER);
 }
 
 export function sign(
   sk: bigint,
   msg: bigint[],
 ): SchnorrSignature {
+  sk = ((sk % JUBJUB_ORDER) + JUBJUB_ORDER) % JUBJUB_ORDER;
   const pk = ecMulGenerator(sk);
   const k = randomScalar();
   const R = ecMulGenerator(k);

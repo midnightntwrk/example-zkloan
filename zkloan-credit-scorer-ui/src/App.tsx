@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Stack, Typography, Link, Alert } from '@mui/material';
-import { MainLayout, ContractConnect, PrivateStateCard, LoanRequestForm, MyLoans } from './components';
+import { Box, Stack, Typography, Link } from '@mui/material';
+import {
+  MainLayout,
+  ContractConnect,
+  PrivateStateCard,
+  LoanRequestForm,
+  MyLoans,
+  FlowStepper,
+  LaceGate,
+  type FlowStep,
+  type StepState,
+} from './components';
 import { useZKLoanContext } from './hooks';
 import { type ZKLoanDeployment } from './contexts';
+import { tokens } from './config/theme';
 
 const App: React.FC = () => {
-  const { deployment$ } = useZKLoanContext();
+  const {
+    deployment$,
+    isConnected: walletConnected,
+    secretPin,
+  } = useZKLoanContext();
   const [deployment, setDeployment] = useState<ZKLoanDeployment>({ status: 'idle' });
 
   useEffect(() => {
@@ -13,66 +28,279 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, [deployment$]);
 
-  const isConnected = deployment.status === 'deployed';
+  const contractConnected = deployment.status === 'deployed';
+  const pinSet = secretPin.length >= 4 && secretPin.length <= 6;
+
+  const stepState = (
+    done: boolean,
+    priorDone: boolean,
+  ): StepState => (done ? 'done' : priorDone ? 'current' : 'pending');
+
+  const steps: FlowStep[] = [
+    {
+      index: '01',
+      label: 'Wallet',
+      state: stepState(walletConnected, true),
+    },
+    {
+      index: '02',
+      label: 'Contract',
+      state: stepState(contractConnected, walletConnected),
+    },
+    {
+      index: '03',
+      label: 'PIN',
+      state: stepState(pinSet && contractConnected, contractConnected),
+    },
+    {
+      index: '04',
+      label: 'Request',
+      state: stepState(false, pinSet && contractConnected),
+    },
+  ];
 
   return (
     <MainLayout>
-      <Typography variant="h4" component="h1" sx={{ mb: 1 }}>
-        Privacy-Preserving Credit Scoring
-      </Typography>
-      <Typography variant="body1" color="grey.400" sx={{ mb: 2 }}>
-        Apply for a loan using zero-knowledge proofs. Your financial data stays private.
-      </Typography>
-
-      <Alert severity="warning" sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          <strong>Disclaimer:</strong> This is a demonstration application designed to showcase Midnight's
-          technology. It is not a real lending service and serves as a reference implementation
-          for the builder community.
-        </Typography>
-      </Alert>
-
-      <Stack spacing={3}>
-        {/* Contract connection - always visible and interactive */}
-        <ContractConnect />
-
-        {/* Main UI - visible but disabled until connected */}
-        <Box
+      {/* Hero */}
+      <Box
+        sx={{
+          mb: { xs: 4, md: 5 },
+          animation: 'reveal 700ms cubic-bezier(.2,.8,.2,1) both',
+        }}
+      >
+        <Typography
+          variant="overline"
           sx={{
-            opacity: isConnected ? 1 : 0.5,
-            pointerEvents: isConnected ? 'auto' : 'none',
-            transition: 'opacity 0.3s ease',
-            position: 'relative',
+            display: 'block',
+            mb: 4,
+            color: tokens.inkMuted,
+            letterSpacing: '0.22em',
           }}
         >
-          {!isConnected && (
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 10,
-                cursor: 'not-allowed',
-              }}
-            />
-          )}
-          <Stack spacing={3}>
-            <PrivateStateCard />
-            <LoanRequestForm />
-            <MyLoans />
-          </Stack>
-        </Box>
-      </Stack>
+          <Box
+            component="span"
+            sx={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              backgroundColor: tokens.accent,
+              mr: 1.5,
+              verticalAlign: 'middle',
+            }}
+          />
+          Privacy-preserving loans · Midnight Preprod · Ledger v8
+        </Typography>
 
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
-        <Typography variant="body2" color="grey.600">
+        <Typography
+          variant="h1"
+          component="h1"
+          sx={{
+            mb: 3.5,
+            color: tokens.ink,
+          }}
+        >
+          Credit scoring,{' '}
+          <Box
+            component="em"
+            sx={{
+              fontStyle: 'italic',
+              color: tokens.accent,
+              fontVariationSettings: '"opsz" 144, "SOFT" 100',
+            }}
+          >
+            without the paperwork
+          </Box>
+          .
+        </Typography>
+
+        <Typography
+          sx={{
+            fontFamily: '"IBM Plex Sans", sans-serif',
+            fontSize: '1.05rem',
+            lineHeight: 1.65,
+            color: tokens.inkDim,
+            maxWidth: 920,
+            mb: 4,
+          }}
+        >
+          Apply for a loan using zero-knowledge proofs. Your credit score, income, and
+          tenure stay on this device — only the verdict reaches the ledger.
+        </Typography>
+
+        {/* Requirements strip */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            py: 1.25,
+            px: 0,
+            borderTop: `1px solid ${tokens.hairline}`,
+            borderBottom: `1px solid ${tokens.hairline}`,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Typography
+            variant="overline"
+            sx={{ color: tokens.cobalt, flexShrink: 0 }}
+          >
+            Requires
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: '"IBM Plex Sans", sans-serif',
+              fontSize: '0.85rem',
+              color: tokens.inkDim,
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <Link
+              href="https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk"
+              target="_blank"
+              rel="noopener"
+              sx={{ color: tokens.ink }}
+            >
+              Midnight Lace
+            </Link>{' '}
+            on <Box component="span" sx={{ color: tokens.ink, fontWeight: 500 }}>Preprod</Box>
+            , funded with tDUST
+          </Typography>
+        </Box>
+      </Box>
+
+      <LaceGate>
+        {/* Progress */}
+        <Box sx={{ mb: { xs: 4, md: 5 } }}>
+          <FlowStepper steps={steps} />
+        </Box>
+
+        {/* Sections */}
+        <Stack
+          spacing={4}
+          sx={{
+            '& > *': {
+              animation: 'reveal 700ms cubic-bezier(.2,.8,.2,1) both',
+            },
+            '& > *:nth-of-type(1)': { animationDelay: '120ms' },
+            '& > *:nth-of-type(2)': { animationDelay: '220ms' },
+          }}
+        >
+          <ContractConnect />
+
+          <Box
+            sx={{
+              opacity: contractConnected ? 1 : 0.38,
+              filter: contractConnected ? 'none' : 'saturate(0.4)',
+              pointerEvents: contractConnected ? 'auto' : 'none',
+              transition: 'opacity 420ms ease, filter 420ms ease',
+              position: 'relative',
+            }}
+          >
+            {!contractConnected && (
+              <Box
+                aria-hidden
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 10,
+                  cursor: 'not-allowed',
+                }}
+              />
+            )}
+            <Stack spacing={4}>
+              <PrivateStateCard />
+              <LoanRequestForm />
+              <MyLoans />
+            </Stack>
+          </Box>
+        </Stack>
+      </LaceGate>
+
+      {/* Colophon */}
+      <Box
+        sx={{
+          mt: { xs: 10, md: 14 },
+          pt: 4,
+          borderTop: `1px solid ${tokens.hairline}`,
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: '"IBM Plex Sans", sans-serif',
+            fontSize: '0.82rem',
+            lineHeight: 1.55,
+            color: tokens.inkMuted,
+            mb: 2.5,
+            maxWidth: 720,
+          }}
+        >
+          <Box
+            component="span"
+            sx={{
+              fontFamily: '"IBM Plex Mono", monospace',
+              fontSize: '0.68rem',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: tokens.amber,
+              mr: 1.25,
+            }}
+          >
+            Demo ·
+          </Box>
+          Reference implementation showcasing Midnight's technology — not a real lending service.
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: '"IBM Plex Mono", monospace',
+            fontSize: '0.7rem',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: tokens.inkMuted,
+          }}
+        >
           Built on{' '}
-          <Link href="https://midnight.network" target="_blank" rel="noopener" color="primary">
+          <Link
+            href="https://midnight.network"
+            target="_blank"
+            rel="noopener"
+            sx={{
+              color: tokens.ink,
+              textDecoration: 'none',
+              borderBottom: `1px solid ${tokens.hairlineStrong}`,
+              pb: '1px',
+              '&:hover': {
+                color: tokens.accent,
+                borderBottomColor: tokens.accent,
+              },
+            }}
+          >
             Midnight
           </Link>
-          . Private by design.
+          {' · '}Private by design · Preprod
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: '"IBM Plex Mono", monospace',
+            fontSize: '0.7rem',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: tokens.inkMuted,
+          }}
+        >
+          v3.0
         </Typography>
       </Box>
     </MainLayout>

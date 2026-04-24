@@ -5,6 +5,86 @@
     <link rel="icon" type="image/png" href="/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZKLoan Credit Scorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..700,30..100;1,9..144,300..700,30..100&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --paper-0: #13100d;
+        --paper-1: #1a1612;
+        --paper-2: #22201c;
+        --ink-primary: #ede4d2;
+        --ink-secondary: #a69c8a;
+        --ink-muted: #6e6758;
+        --hairline: rgba(237, 228, 210, 0.08);
+        --hairline-strong: rgba(237, 228, 210, 0.16);
+        --accent: #e77d4d;
+        --accent-soft: rgba(231, 125, 77, 0.14);
+        --sage: #7da77d;
+        --amber: #e0a547;
+        --crimson: #d45a5a;
+        --cobalt: #4a7fa8;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--paper-0);
+        color: var(--ink-primary);
+        font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: 'ss01', 'cv01', 'cv11';
+      }
+
+      body {
+        background-image:
+          radial-gradient(
+            ellipse 120% 80% at 50% -10%,
+            rgba(231, 125, 77, 0.06),
+            transparent 60%
+          ),
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.93  0 0 0 0 0.89  0 0 0 0 0.82  0 0 0 0.018 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        background-attachment: fixed;
+      }
+
+      ::selection {
+        background: var(--accent);
+        color: var(--paper-0);
+      }
+
+      /* Keep scroll chrome quiet */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--hairline-strong);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(237, 228, 210, 0.28);
+      }
+
+      @keyframes reveal {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

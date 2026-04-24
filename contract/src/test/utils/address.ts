@@ -1,5 +1,5 @@
 import { encodeCoinPublicKey } from '@midnight-ntwrk/compact-runtime';
-import { encodeContractAddress } from '@midnight-ntwrk/ledger-v7';
+import { encodeContractAddress } from '@midnight-ntwrk/ledger-v8';
 import type * as Compact from '../../managed/zkloan-credit-scorer/contract/index.js';
 
 /**
