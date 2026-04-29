@@ -30,7 +30,8 @@ import {
 import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { getNetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import { MidnightBech32m, ShieldedAddress } from '@midnight-ntwrk/wallet-sdk-address-format';
 import { deployContract, findDeployedContract, submitCallTx } from '@midnight-ntwrk/midnight-js-contracts';
 import { type PrivateStateProvider } from '@midnight-ntwrk/midnight-js-types';
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
@@ -265,15 +266,24 @@ export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger
     setIsConnected(true);
     setWalletAddress(addresses.shieldedAddress || null);
 
-    // Store the coin public key bytes for later use in getMyLoans
-    if (addresses.shieldedCoinPublicKey) {
-      const coinPkBytes = typeof addresses.shieldedCoinPublicKey === 'string'
-        ? new Uint8Array(Buffer.from(addresses.shieldedCoinPublicKey, 'hex'))
-        : new Uint8Array(addresses.shieldedCoinPublicKey as ArrayBuffer);
-      setWalletPublicKeyBytes(coinPkBytes);
-      logger.info({ coinPkBytesLength: coinPkBytes.length }, 'Stored coin public key bytes');
+    // Decode the coin public key from the bech32 shielded address. The
+    // dapp-connector-api `shieldedCoinPublicKey` field changed shape across
+    // SDK versions; the bech32 address is the canonical source.
+    if (addresses.shieldedAddress) {
+      try {
+        const decoded = MidnightBech32m.parse(addresses.shieldedAddress)
+          .decode(ShieldedAddress, getNetworkId());
+        const coinPkBytes = new Uint8Array(decoded.coinPublicKey.data);
+        if (coinPkBytes.length !== 32) {
+          throw new Error(`Expected 32-byte coin public key, got ${coinPkBytes.length}`);
+        }
+        setWalletPublicKeyBytes(coinPkBytes);
+        logger.info({ coinPkBytesLength: coinPkBytes.length }, 'Stored coin public key bytes');
+      } catch (err) {
+        logger.error({ err }, 'Failed to decode shielded address for coin public key');
+      }
     } else {
-      logger.warn('No shieldedCoinPublicKey received from wallet');
+      logger.warn('No shieldedAddress received from wallet');
     }
 
     logger.info({
