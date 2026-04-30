@@ -107,8 +107,8 @@ The attestation API signs credit data with a Schnorr signature on Jubjub; the co
 ```bash
 # Terminal B — fresh terminal, leave it open
 cd zkloan-credit-scorer-attestation-api
-PROVIDER_SECRET_KEY="$(node -e 'console.log(require(\"crypto\").randomBytes(32).toString(\"hex\"))')" \
-PORT=4000 \
+PROVIDER_SECRET_KEY="$(node -e 'console.log(require("crypto").randomBytes(32).toString("hex"))')"
+PORT=4000
 npm run dev
 ```
 
