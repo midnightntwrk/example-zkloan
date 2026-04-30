@@ -21,6 +21,7 @@ import { type ZKLoanCreditScorerProviders, type DeployedZKLoanCreditScorerContra
 import { type Config, StandaloneConfig } from './config';
 import * as api from './api';
 import type { WalletContext } from './api';
+import { resolveZswapCoinPublicKey } from './address-utils';
 import { getUserProfile } from './state.utils';
 import 'dotenv/config';
 
@@ -81,7 +82,9 @@ const requestLoan = async (
   walletContext: WalletContext,
   rli: Interface,
 ): Promise<void> => {
-  const amountStr = await rli.question('Enter the loan amount requested: ');
+  const amountStr = await rli.question(
+    'Enter the loan amount (USD, 1-65535 — the contract caps approvals at $10,000 / $7,000 / $3,000 per tier): ',
+  );
   const pinStr = await rli.question('Enter your secret PIN: ');
 
   const amount = BigInt(amountStr);
@@ -107,25 +110,28 @@ const changePinFlow = async (contract: DeployedZKLoanCreditScorerContract, rli: 
   logger.info('Note: If you have many loans, you may need to call this multiple times to complete the migration.');
 };
 
+const ADDRESS_PROMPT_HINT =
+  '(shielded address `mn_shield-addr_…` or 32-byte hex public key)';
+
 const blacklistUserFlow = async (contract: DeployedZKLoanCreditScorerContract, rli: Interface): Promise<void> => {
-  const accountHex = await rli.question('Enter the Zswap public key to blacklist (hex): ');
-  const account = Buffer.from(accountHex, 'hex');
+  const accountInput = await rli.question(`Enter the user to blacklist ${ADDRESS_PROMPT_HINT}: `);
+  const account = resolveZswapCoinPublicKey(accountInput);
 
   await api.blacklistUser(contract, account);
   logger.info('User blacklisted successfully!');
 };
 
 const removeBlacklistUserFlow = async (contract: DeployedZKLoanCreditScorerContract, rli: Interface): Promise<void> => {
-  const accountHex = await rli.question('Enter the Zswap public key to remove from blacklist (hex): ');
-  const account = Buffer.from(accountHex, 'hex');
+  const accountInput = await rli.question(`Enter the user to remove from blacklist ${ADDRESS_PROMPT_HINT}: `);
+  const account = resolveZswapCoinPublicKey(accountInput);
 
   await api.removeBlacklistUser(contract, account);
   logger.info('User removed from blacklist successfully!');
 };
 
 const transferAdminFlow = async (contract: DeployedZKLoanCreditScorerContract, rli: Interface): Promise<void> => {
-  const newAdminHex = await rli.question('Enter the new admin Zswap public key (hex): ');
-  const newAdmin = Buffer.from(newAdminHex, 'hex');
+  const newAdminInput = await rli.question(`Enter the new admin ${ADDRESS_PROMPT_HINT}: `);
+  const newAdmin = resolveZswapCoinPublicKey(newAdminInput);
 
   await api.transferAdmin(contract, newAdmin);
   logger.info('Admin role transferred successfully!');

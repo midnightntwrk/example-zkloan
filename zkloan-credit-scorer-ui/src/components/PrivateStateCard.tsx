@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -11,6 +11,7 @@ import {
   TextField,
   Button,
   Stack,
+  Alert,
 } from '@mui/material';
 import { useZKLoanContext } from '../hooks';
 import { userProfiles } from '../utils/loanProfiles';
@@ -113,6 +114,8 @@ export const PrivateStateCard: React.FC = () => {
     refreshLoans,
   } = useZKLoanContext();
   const [selectedProfile, setSelectedProfile] = React.useState(0);
+  const [savedPin, setSavedPin] = useState<string | null>(null);
+  const [pinMessage, setPinMessage] = useState<{ tone: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   const currentProfile = userProfiles[selectedProfile];
   const tierInfo = evaluateTier(
@@ -138,16 +141,31 @@ export const PrivateStateCard: React.FC = () => {
     setCurrentProfileId(profile.applicantId);
   };
 
+  // Contract uses Uint<16> for the PIN (max 65535). We keep the UI cap at
+  // 4 digits to avoid users entering a valid-looking 5/6-digit number that
+  // overflows the circuit type at submission time.
+  const MAX_PIN_DIGITS = 4;
+
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    const value = e.target.value.replace(/\D/g, '').slice(0, MAX_PIN_DIGITS);
     setSecretPin(value);
+    if (savedPin !== null && value !== savedPin) {
+      setPinMessage(null);
+    }
   };
 
-  const handleLoadLoans = () => {
+  const handleSavePin = () => {
+    setSavedPin(secretPin);
+    setPinMessage({
+      tone: 'success',
+      text:
+        'PIN saved locally. It never leaves this device — it is hashed into the public key used on-chain.',
+    });
     refreshLoans();
   };
 
-  const isPinValid = secretPin.length >= 4 && secretPin.length <= 6;
+  const isPinValid = secretPin.length >= 4 && secretPin.length <= MAX_PIN_DIGITS;
+  const isSaved = savedPin !== null && savedPin === secretPin;
 
   return (
     <Card>
@@ -205,24 +223,34 @@ export const PrivateStateCard: React.FC = () => {
             fullWidth
             size="small"
             label="Secret PIN"
-            placeholder="4–6 digits"
+            placeholder="4 digits"
             type="text"
             inputMode="numeric"
             value={secretPin}
             onChange={handlePinChange}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ maxLength: 6, autoComplete: 'off' }}
+            inputProps={{ maxLength: MAX_PIN_DIGITS, autoComplete: 'off' }}
           />
 
           <Button
-            variant="outlined"
-            onClick={handleLoadLoans}
-            disabled={!isPinValid}
+            variant={isSaved ? 'text' : 'outlined'}
+            onClick={handleSavePin}
+            disabled={!isPinValid || isSaved}
             sx={{ minWidth: 120, whiteSpace: 'nowrap' }}
           >
-            Set PIN
+            {isSaved ? '✓ Saved' : 'Save PIN'}
           </Button>
         </Stack>
+
+        {pinMessage && (
+          <Alert
+            severity={pinMessage.tone === 'info' ? 'info' : pinMessage.tone}
+            sx={{ mt: 2 }}
+            onClose={() => setPinMessage(null)}
+          >
+            {pinMessage.text}
+          </Alert>
+        )}
 
         {/* Stats grid — editorial */}
         <Box

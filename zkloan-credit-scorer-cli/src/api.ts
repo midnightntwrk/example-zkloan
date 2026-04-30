@@ -206,7 +206,7 @@ export const requestLoan = async (
   logger.info(`Private state updated with attestation (provider ${providerInfo.providerId})`);
 
   // 6. Call the circuit
-  logger.info(`Requesting loan for amount: ${amountRequested} with PIN...`);
+  logger.info(`Requesting loan for $${amountRequested} (USD) with PIN...`);
   const finalizedTxData = await contract.callTx.requestLoan(amountRequested, secretPin);
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
@@ -355,7 +355,7 @@ export const waitForFunds = (wallet: WalletFacade) =>
       Rx.tap((state) => {
         const unshielded = state.unshielded?.balances[ledger.nativeToken().raw] ?? 0n;
         const shielded = state.shielded?.balances[ledger.nativeToken().raw] ?? 0n;
-        logger.info(`Waiting for funds. Synced: ${state.isSynced}, Unshielded: ${unshielded}, Shielded: ${shielded}`);
+        logger.info(`Waiting for NIGHT funds. Synced: ${state.isSynced}, Unshielded: ${unshielded}, Shielded: ${shielded}`);
       }),
       Rx.filter((state) => state.isSynced),
       Rx.map((s) => (s.unshielded?.balances[ledger.nativeToken().raw] ?? 0n) + (s.shielded?.balances[ledger.nativeToken().raw] ?? 0n)),
@@ -364,19 +364,26 @@ export const waitForFunds = (wallet: WalletFacade) =>
   );
 
 /**
- * Display wallet balances (unshielded, shielded, total)
+ * Display wallet balances.
+ *
+ * On Midnight, NIGHT is the user-facing token and DUST is the fee resource
+ * generated from registered NIGHT UTXOs. Testnets use the prefixed
+ * tNIGHT / tDUST variants. We query the native token for NIGHT and the
+ * dust wallet for DUST and surface both so it's obvious which is which.
  */
-export const displayWalletBalances = async (wallet: WalletFacade): Promise<{ unshielded: bigint; shielded: bigint; total: bigint }> => {
+export const displayWalletBalances = async (wallet: WalletFacade): Promise<{ unshielded: bigint; shielded: bigint; total: bigint; dust: bigint }> => {
   const state = await Rx.firstValueFrom(wallet.state());
   const unshielded = state.unshielded?.balances[ledger.nativeToken().raw] ?? 0n;
   const shielded = state.shielded?.balances[ledger.nativeToken().raw] ?? 0n;
   const total = unshielded + shielded;
+  const dust = state.dust?.balance(new Date()) ?? 0n;
 
-  logger.info(`Unshielded balance: ${unshielded} tDUST`);
-  logger.info(`Shielded balance: ${shielded} tDUST`);
-  logger.info(`Total balance: ${total} tDUST`);
+  logger.info(`Unshielded NIGHT balance: ${unshielded}`);
+  logger.info(`Shielded NIGHT balance: ${shielded}`);
+  logger.info(`Total NIGHT balance: ${total}`);
+  logger.info(`DUST balance (for fees): ${dust}`);
 
-  return { unshielded, shielded, total };
+  return { unshielded, shielded, total, dust };
 };
 
 /**
