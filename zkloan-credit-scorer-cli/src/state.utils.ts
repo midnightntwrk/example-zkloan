@@ -2,7 +2,16 @@
 // Copyright (C) 2025 Midnight Foundation
 // SPDX-License-Identifier: Apache-2.0
 
+import { webcrypto } from 'node:crypto';
 import { type ZKLoanCreditScorerPrivateState } from 'zkloan-credit-scorer-contract';
+
+// Generate a fresh 32-byte admin secret. The deployer holds this in private
+// state; the ledger only ever sees its hash via `deriveAdminPublicKey`.
+function generateAdminSecret(): Uint8Array {
+  const bytes = new Uint8Array(32);
+  webcrypto.getRandomValues(bytes);
+  return bytes;
+}
 
 export const userProfiles = [
   {
@@ -67,7 +76,10 @@ export const userProfiles = [
   }
 ];
 
-export function getUserProfile(index?: number): ZKLoanCreditScorerPrivateState {
+export function getUserProfile(
+  index?: number,
+  adminSecretKey: Uint8Array = generateAdminSecret(),
+): ZKLoanCreditScorerPrivateState {
   let profile;
   if (index !== undefined) {
     if (index < 0 || index >= userProfiles.length) {
@@ -84,5 +96,6 @@ export function getUserProfile(index?: number): ZKLoanCreditScorerPrivateState {
     monthsAsCustomer: BigInt(profile.monthsAsCustomer),
     attestationSignature: { announcement: { x: 0n, y: 0n }, response: 0n },
     attestationProviderId: 0n,
+    adminSecretKey,
   };
 }

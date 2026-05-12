@@ -8,6 +8,10 @@ export enum LoanStatus { Approved = 0,
 
 export type LoanApplication = { authorizedAmount: bigint; status: LoanStatus };
 
+export type AdminSecretKey = { bytes: Uint8Array };
+
+export type AdminPublicKey = { bytes: Uint8Array };
+
 export type Schnorr_SchnorrSignature = { announcement: __compactRuntime.JubjubPoint;
                                          response: bigint
                                        };
@@ -21,6 +25,7 @@ export type Witnesses<PS> = {
                                                                                          },
                                                                                          Schnorr_SchnorrSignature,
                                                                                          bigint]];
+  getAdminSecret(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, AdminSecretKey];
 }
 
 export type ImpureCircuits<PS> = {
@@ -40,8 +45,8 @@ export type ImpureCircuits<PS> = {
                    providerPk_0: __compactRuntime.JubjubPoint): __compactRuntime.CircuitResults<PS, []>;
   removeProvider(context: __compactRuntime.CircuitContext<PS>,
                  providerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  transferAdmin(context: __compactRuntime.CircuitContext<PS>,
-                newAdmin_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
+  rotateAdmin(context: __compactRuntime.CircuitContext<PS>,
+              newAdmin_0: AdminPublicKey): __compactRuntime.CircuitResults<PS, []>;
   changePin(context: __compactRuntime.CircuitContext<PS>,
             oldPin_0: bigint,
             newPin_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -64,14 +69,15 @@ export type ProvableCircuits<PS> = {
                    providerPk_0: __compactRuntime.JubjubPoint): __compactRuntime.CircuitResults<PS, []>;
   removeProvider(context: __compactRuntime.CircuitContext<PS>,
                  providerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  transferAdmin(context: __compactRuntime.CircuitContext<PS>,
-                newAdmin_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
+  rotateAdmin(context: __compactRuntime.CircuitContext<PS>,
+              newAdmin_0: AdminPublicKey): __compactRuntime.CircuitResults<PS, []>;
   changePin(context: __compactRuntime.CircuitContext<PS>,
             oldPin_0: bigint,
             newPin_0: bigint): __compactRuntime.CircuitResults<PS, []>;
 }
 
 export type PureCircuits = {
+  deriveAdminPublicKey(sk_0: AdminSecretKey): AdminPublicKey;
   publicKey(sk_0: Uint8Array, pin_0: bigint): Uint8Array;
   schnorrChallenge(ann_x_0: bigint,
                    ann_y_0: bigint,
@@ -81,6 +87,8 @@ export type PureCircuits = {
 }
 
 export type Circuits<PS> = {
+  deriveAdminPublicKey(context: __compactRuntime.CircuitContext<PS>,
+                       sk_0: AdminSecretKey): __compactRuntime.CircuitResults<PS, AdminPublicKey>;
   requestLoan(context: __compactRuntime.CircuitContext<PS>,
               amountRequested_0: bigint,
               secretPin_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -97,8 +105,8 @@ export type Circuits<PS> = {
                    providerPk_0: __compactRuntime.JubjubPoint): __compactRuntime.CircuitResults<PS, []>;
   removeProvider(context: __compactRuntime.CircuitContext<PS>,
                  providerId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  transferAdmin(context: __compactRuntime.CircuitContext<PS>,
-                newAdmin_0: { bytes: Uint8Array }): __compactRuntime.CircuitResults<PS, []>;
+  rotateAdmin(context: __compactRuntime.CircuitContext<PS>,
+              newAdmin_0: AdminPublicKey): __compactRuntime.CircuitResults<PS, []>;
   changePin(context: __compactRuntime.CircuitContext<PS>,
             oldPin_0: bigint,
             newPin_0: bigint): __compactRuntime.CircuitResults<PS, []>;
@@ -139,7 +147,7 @@ export type Ledger = {
     lookup(key_0: Uint8Array): bigint;
     [Symbol.iterator](): Iterator<[Uint8Array, bigint]>
   };
-  readonly admin: { bytes: Uint8Array };
+  readonly contractAdmin: AdminPublicKey;
   providers: {
     isEmpty(): boolean;
     size(): bigint;

@@ -210,7 +210,8 @@ transientHash<T>(value)            // For in-proof computation
 persistentCommit<T>(value, rand)   // For ledger storage
 transientCommit<T>(value, rand)    // For in-proof computation
 
-// Identity
+// Identity (caller identifier only — NOT a proof of key ownership;
+// never use the return value as the RHS of an authorization assert)
 ownPublicKey()                     // Returns caller's ZswapCoinPublicKey
 
 // Padding strings
@@ -821,7 +822,8 @@ error TS6133: 'ttl' is declared but its value is never read
 | Check set membership | `mySet.member(value)` |
 | Map lookup | `myMap.lookup(key)` |
 | Nested map | `outer.lookup(k1).lookup(k2)` |
-| Get caller | `ownPublicKey()` |
+| Get caller (identifier only; never use in an authorization `assert`) | `ownPublicKey()` |
+| Authorize admin | `assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "...")` |
 | Hash for storage | `persistentHash<T>(value)` |
 | Commit with randomness | `persistentCommit<T>(value, rand)` |
 | Declare disclosure | `disclose(value)` |

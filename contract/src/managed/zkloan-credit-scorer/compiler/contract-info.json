@@ -4,6 +4,42 @@
   "runtime-version": "0.15.0",
   "circuits": [
     {
+      "name": "deriveAdminPublicKey",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "sk",
+          "type": {
+            "type-name": "Struct",
+            "name": "AdminSecretKey",
+            "elements": [
+              {
+                "name": "bytes",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Struct",
+        "name": "AdminPublicKey",
+        "elements": [
+          {
+            "name": "bytes",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "requestLoan",
       "pure": false,
       "proof": true,
@@ -167,7 +203,7 @@
       }
     },
     {
-      "name": "transferAdmin",
+      "name": "rotateAdmin",
       "pure": false,
       "proof": true,
       "arguments": [
@@ -175,7 +211,7 @@
           "name": "newAdmin",
           "type": {
             "type-name": "Struct",
-            "name": "ZswapCoinPublicKey",
+            "name": "AdminPublicKey",
             "elements": [
               {
                 "name": "bytes",
@@ -374,6 +410,24 @@
           {
             "type-name": "Uint",
             "maxval": 65535
+          }
+        ]
+      }
+    },
+    {
+      "name": "getAdminSecret",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Struct",
+        "name": "AdminSecretKey",
+        "elements": [
+          {
+            "name": "bytes",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
           }
         ]
       }

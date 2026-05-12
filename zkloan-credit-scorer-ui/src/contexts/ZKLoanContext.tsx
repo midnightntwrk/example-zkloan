@@ -41,7 +41,7 @@ import { ZKLoanCreditScorer, witnesses, type ZKLoanCreditScorerPrivateState } fr
 type ZKLoanCreditScorerContract = ZKLoanCreditScorer.Contract<ZKLoanCreditScorerPrivateState>;
 import { saveLoanProfile } from '../utils/loanProfiles';
 
-export type ZKLoanCircuitKeys = 'requestLoan' | 'changePin' | 'blacklistUser' | 'removeBlacklistUser' | 'transferAdmin' | 'respondToLoan' | 'registerProvider' | 'removeProvider';
+export type ZKLoanCircuitKeys = 'requestLoan' | 'changePin' | 'blacklistUser' | 'removeBlacklistUser' | 'rotateAdmin' | 'respondToLoan' | 'registerProvider' | 'removeProvider';
 
 // Re-export loan types for components
 export type LoanStatus = 'Approved' | 'Rejected' | 'Proposed' | 'NotAccepted';
@@ -172,12 +172,23 @@ function inMemoryPrivateStateProvider<PSI extends string, PS>(): PrivateStatePro
 }
 
 export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger, children }) => {
-  const [privateState, setPrivateState] = useState<ZKLoanCreditScorerPrivateState>({
-    creditScore: 720n,
-    monthlyIncome: 2500n,
-    monthsAsCustomer: 24n,
-    attestationSignature: { announcement: { x: 0n, y: 0n }, response: 0n },
-    attestationProviderId: 0n,
+  // Generate a fresh 32-byte admin secret per browser session. The deploying
+  // user holds this in memory; the ledger only sees its derived public key
+  // via `deriveAdminPublicKey`. Persisting this across reloads would let the
+  // user keep admin authority on a contract they already deployed; for now
+  // the demo regenerates on refresh, which means refreshing the page after
+  // deploying drops admin authority. That's intentional for the demo flow.
+  const [privateState, setPrivateState] = useState<ZKLoanCreditScorerPrivateState>(() => {
+    const adminSecretKey = new Uint8Array(32);
+    crypto.getRandomValues(adminSecretKey);
+    return {
+      creditScore: 720n,
+      monthlyIncome: 2500n,
+      monthsAsCustomer: 24n,
+      attestationSignature: { announcement: { x: 0n, y: 0n }, response: 0n },
+      attestationProviderId: 0n,
+      adminSecretKey,
+    };
   });
   const [currentProfileId, setCurrentProfileId] = useState<string>('user-001');
   const [secretPin, setSecretPin] = useState<string>('1234');

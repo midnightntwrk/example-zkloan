@@ -30,7 +30,7 @@ import {
 } from "../managed/zkloan-credit-scorer/contract/index.js";
 import { type ZKLoanCreditScorerPrivateState, witnesses } from "../witnesses.js";
 import { createEitherTestUser } from "./utils/address.js";
-import { createSignedUserProfile, generateProviderKeyPair } from "./utils/test-data.js";
+import { createSignedUserProfile, generateAdminSecret, generateProviderKeyPair } from "./utils/test-data.js";
 
 const bytes32Type = new CompactTypeBytes(32);
 
@@ -40,6 +40,7 @@ export class ZKLoanCreditScorerSimulator {
   readonly providerSk: bigint;
   readonly providerPk: JubjubPoint;
   readonly providerId: bigint = 1n;
+  readonly adminSecretKey: Uint8Array;
 
   constructor() {
     const user = createEitherTestUser("Alice");
@@ -50,6 +51,11 @@ export class ZKLoanCreditScorerSimulator {
     this.providerSk = keyPair.sk;
     this.providerPk = keyPair.pk;
 
+    // Generate the admin secret. Whoever deploys holds this secret; the
+    // ledger only stores its derived public key. `rotateAdmin` is the only
+    // way to hand the role over without ever revealing a private key.
+    this.adminSecretKey = generateAdminSecret();
+
     // Create initial private state with attestation for user profile 0
     const userPubKeyHash = this.computeUserPubKeyHash(user.left.bytes, 1234n);
     const initialPrivateState: ZKLoanCreditScorerPrivateState = createSignedUserProfile(
@@ -57,6 +63,7 @@ export class ZKLoanCreditScorerSimulator {
       this.providerSk,
       userPubKeyHash,
       this.providerId,
+      this.adminSecretKey,
     );
 
     const {
@@ -134,12 +141,35 @@ export class ZKLoanCreditScorerSimulator {
     return ledger(this.circuitContext.currentQueryContext.state);
   }
 
-  public transferAdmin(newAdmin: Uint8Array): Ledger {
-    this.circuitContext = this.contract.impureCircuits.transferAdmin(
+  public rotateAdmin(newAdminPublicKey: Uint8Array): Ledger {
+    this.circuitContext = this.contract.impureCircuits.rotateAdmin(
       this.circuitContext,
-      { bytes: newAdmin }
+      { bytes: newAdminPublicKey }
     ).context;
     return ledger(this.circuitContext.currentQueryContext.state);
+  }
+
+  // Compute an AdminPublicKey from a secret without running an impure circuit.
+  // Used by tests to set up rotations and to simulate non-admin callers.
+  public deriveAdminPublicKey(adminSecret: Uint8Array): Uint8Array {
+    return pureCircuits.deriveAdminPublicKey({ bytes: adminSecret }).bytes;
+  }
+
+  public generateAdminSecret(): Uint8Array {
+    return generateAdminSecret();
+  }
+
+  // Swap the simulator's local admin secret. Tests use this to act as a
+  // non-admin caller: the ledger still holds the original admin's pubkey,
+  // so the in-circuit equality check fails as expected.
+  public setAdminSecret(secret: Uint8Array): void {
+    this.circuitContext = {
+      ...this.circuitContext,
+      currentPrivateState: {
+        ...this.circuitContext.currentPrivateState,
+        adminSecretKey: secret,
+      },
+    };
   }
 
   public registerProvider(providerId: bigint, providerPk: JubjubPoint): Ledger {

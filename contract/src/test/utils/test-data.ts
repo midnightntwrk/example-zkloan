@@ -105,11 +105,16 @@ export function schnorrSign(
   return { announcement: R, response: s };
 }
 
+export function generateAdminSecret(): Uint8Array {
+  return new Uint8Array(crypto.randomBytes(32));
+}
+
 export function createSignedUserProfile(
   index: number,
   providerSk: bigint,
   userPubKeyHash: bigint,
   providerId: bigint = 1n,
+  adminSecretKey: Uint8Array = generateAdminSecret(),
 ): ZKLoanCreditScorerPrivateState {
   const profile = userProfiles[index];
   if (!profile) {
@@ -131,6 +136,7 @@ export function createSignedUserProfile(
     monthsAsCustomer: BigInt(profile.monthsAsCustomer),
     attestationSignature: signature,
     attestationProviderId: providerId,
+    adminSecretKey,
   };
 }
 
@@ -141,6 +147,7 @@ export function createCustomSignedProfile(
   providerSk: bigint,
   userPubKeyHash: bigint,
   providerId: bigint = 1n,
+  adminSecretKey: Uint8Array = generateAdminSecret(),
 ): ZKLoanCreditScorerPrivateState {
   const msg: bigint[] = [creditScore, monthlyIncome, monthsAsCustomer, userPubKeyHash];
   const signature = schnorrSign(providerSk, msg);
@@ -151,10 +158,14 @@ export function createCustomSignedProfile(
     monthsAsCustomer,
     attestationSignature: signature,
     attestationProviderId: providerId,
+    adminSecretKey,
   };
 }
 
-export function getUserProfile(index?: number): ZKLoanCreditScorerPrivateState {
+export function getUserProfile(
+  index?: number,
+  adminSecretKey: Uint8Array = generateAdminSecret(),
+): ZKLoanCreditScorerPrivateState {
   let profile;
   if (index !== undefined) {
     if (index < 0 || index >= userProfiles.length) {
@@ -171,5 +182,6 @@ export function getUserProfile(index?: number): ZKLoanCreditScorerPrivateState {
     monthsAsCustomer: BigInt(profile.monthsAsCustomer),
     attestationSignature: { announcement: { x: 0n, y: 0n }, response: 0n },
     attestationProviderId: 0n,
+    adminSecretKey,
   };
 }

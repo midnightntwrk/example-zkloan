@@ -48,7 +48,7 @@ You can do one of the following:
   4. Display wallet balances
   5. [Admin] Blacklist a user
   6. [Admin] Remove user from blacklist
-  7. [Admin] Transfer admin role
+  7. [Admin] Rotate admin role to new derived public key
   8. [Admin] Register attestation provider
   9. [Admin] Remove attestation provider
   10. Exit
@@ -129,12 +129,23 @@ const removeBlacklistUserFlow = async (contract: DeployedZKLoanCreditScorerContr
   logger.info('User removed from blacklist successfully!');
 };
 
-const transferAdminFlow = async (contract: DeployedZKLoanCreditScorerContract, rli: Interface): Promise<void> => {
-  const newAdminInput = await rli.question(`Enter the new admin ${ADDRESS_PROMPT_HINT}: `);
-  const newAdmin = resolveZswapCoinPublicKey(newAdminInput);
+// Rotate the admin role to a public key the new admin already derived
+// locally. The new admin runs `deriveAdminPublicKey` against their fresh
+// 32-byte secret and hands the resulting public key (64 hex chars) to the
+// current admin. No private key is exchanged.
+const rotateAdminFlow = async (contract: DeployedZKLoanCreditScorerContract, rli: Interface): Promise<void> => {
+  const newAdminPkInput = await rli.question(
+    'Enter the new admin derived public key (64 hex chars). ' +
+    'The new admin generates this with `deriveAdminPublicKey(secret)` and shares only the result: ',
+  );
+  const hex = newAdminPkInput.trim().toLowerCase().replace(/^0x/, '');
+  if (!/^[0-9a-f]{64}$/.test(hex)) {
+    throw new Error('New admin public key must be exactly 64 hex chars (32 bytes).');
+  }
+  const newAdminPublicKey = Uint8Array.from(Buffer.from(hex, 'hex'));
 
-  await api.transferAdmin(contract, newAdmin);
-  logger.info('Admin role transferred successfully!');
+  await api.rotateAdmin(contract, newAdminPublicKey);
+  logger.info('Admin role rotated successfully!');
 };
 
 const registerProviderFlow = async (contract: DeployedZKLoanCreditScorerContract, rli: Interface): Promise<void> => {
@@ -185,7 +196,7 @@ const mainLoop = async (providers: ZKLoanCreditScorerProviders, walletContext: W
           await removeBlacklistUserFlow(contract, rli);
           break;
         case '7':
-          await transferAdminFlow(contract, rli);
+          await rotateAdminFlow(contract, rli);
           break;
         case '8':
           await registerProviderFlow(contract, rli);

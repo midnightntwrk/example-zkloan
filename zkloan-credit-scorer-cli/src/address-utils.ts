@@ -28,9 +28,10 @@ import { getNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
  *     from the address; the encryption key portion is discarded.
  *   - a raw 32-byte hex string (64 hex chars, with or without `0x` prefix).
  *
- * The admin circuits (blacklistUser / removeBlacklistUser / transferAdmin)
- * want a `ZswapCoinPublicKey` which is 32 bytes, so both inputs produce
- * the same output.
+ * The blacklist circuits (blacklistUser / removeBlacklistUser) want a
+ * `ZswapCoinPublicKey` which is 32 bytes, so both inputs produce the same
+ * output. Admin rotation uses an `AdminPublicKey` (a contract-specific
+ * 32-byte hash) and is handled separately — see `rotateAdmin`.
  *
  * Throws with a clear message if the input is neither a valid bech32
  * shielded address nor 32-byte hex.

@@ -526,7 +526,7 @@ type ZKLoanCircuitKeys =
   | 'changePin'        // PIN migration circuit
   | 'blacklistUser'    // Admin: add to blacklist
   | 'removeBlacklistUser' // Admin: remove from blacklist
-  | 'transferAdmin';   // Admin: transfer admin role
+  | 'rotateAdmin';     // Admin: rotate admin role to a new derived public key
 ```
 
 ### Calling the Contract

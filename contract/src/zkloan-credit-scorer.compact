@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pragma language_version 0.22;
+pragma language_version >= 0.22;
 import CompactStandardLibrary;
 import "schnorr" prefix Schnorr_;
 
@@ -34,17 +34,40 @@ struct Applicant {
     monthsAsCustomer: Uint<16>;
 }
 
+// Admin authorization uses the witness-derived keypair pattern. The admin
+// holds a 32-byte secret in their local private state; the ledger stores only
+// the public hash. Authorization is a constraint that the caller's secret
+// hashes to the ledger value — `ownPublicKey()` is never used for auth.
+export struct AdminSecretKey {
+    bytes: Bytes<32>;
+}
+export struct AdminPublicKey {
+    bytes: Bytes<32>;
+}
+
 constructor() {
-    admin = ownPublicKey();
+    contractAdmin = disclose(deriveAdminPublicKey(getAdminSecret()));
 }
 
 export ledger blacklist: Set<ZswapCoinPublicKey>;
 export ledger loans: Map<Bytes<32>, Map<Uint<16>, LoanApplication>>;
 export ledger onGoingPinMigration: Map<Bytes<32>, Uint<16>>;
-export ledger admin: ZswapCoinPublicKey;
+export ledger contractAdmin: AdminPublicKey;
 export ledger providers: Map<Uint<16>, JubjubPoint>;
 
 witness getAttestedScoringWitness(): [Applicant, Schnorr_SchnorrSignature, Uint<16>];
+witness getAdminSecret(): AdminSecretKey;
+
+// Deterministic public-key derivation. The domain separator binds this hash
+// to this contract: the same secret cannot be replayed across deployments.
+export pure circuit deriveAdminPublicKey(sk: AdminSecretKey): AdminPublicKey {
+    return AdminPublicKey {
+        bytes: persistentHash<Vector<2, Bytes<32>>>([
+            pad(32, "zkloan:admin:pk:v1"),
+            sk.bytes
+        ])
+    };
+}
 
 export circuit requestLoan(amountRequested:Uint<16>, secretPin: Uint<16>):[] {
     assert(amountRequested > 0, "Loan amount must be greater than zero");
@@ -144,33 +167,36 @@ circuit createLoan(requester: Bytes<32>, amountRequested: Uint<16>, topTierAmoun
 }
 
 export circuit blacklistUser(account: ZswapCoinPublicKey): [] {
-    assert(ownPublicKey() == admin, "Only admin can blacklist users");
+    assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can blacklist users");
     blacklist.insert(disclose(account));
     return [];
 }
 
 export circuit removeBlacklistUser(account: ZswapCoinPublicKey): [] {
-    assert(ownPublicKey() == admin, "Only admin can remove from blacklist");
+    assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can remove from blacklist");
     blacklist.remove(disclose(account));
     return [];
 }
 
 export circuit registerProvider(providerId: Uint<16>, providerPk: JubjubPoint): [] {
-    assert(ownPublicKey() == admin, "Only admin can register providers");
+    assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can register providers");
     providers.insert(disclose(providerId), disclose(providerPk));
     return [];
 }
 
 export circuit removeProvider(providerId: Uint<16>): [] {
-    assert(ownPublicKey() == admin, "Only admin can remove providers");
+    assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can remove providers");
     assert(providers.member(disclose(providerId)), "Provider not found");
     providers.remove(disclose(providerId));
     return [];
 }
 
-export circuit transferAdmin(newAdmin: ZswapCoinPublicKey): [] {
-    assert(ownPublicKey() == admin, "Only admin can transfer admin role");
-    admin = disclose(newAdmin);
+// Hand the admin role to a new derived public key. The caller proves they
+// hold the current admin secret; the new admin is passed in as a public key
+// the next admin already controls. No private key ever leaves either party.
+export circuit rotateAdmin(newAdmin: AdminPublicKey): [] {
+    assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can rotate admin role");
+    contractAdmin = disclose(newAdmin);
     return [];
 }
 

@@ -4,6 +4,10 @@
 
 ---
 
+> **Update (2026):** The original version of this post recommended `ownPublicKey()` for admin authorization. That pattern is insecure — `ownPublicKey()` does not prove key ownership, and any value on the ledger can be replayed. The code examples below have been updated to use the witness-derived keypair pattern. See the [contract source](contract/src/zkloan-credit-scorer.compact) for the current authoritative implementation.
+
+---
+
 ## Introduction
 
 Lending has a privacy paradox. To get a loan, you must prove you're creditworthy. To prove you're creditworthy, you must expose your credit score, income, employment history, and other sensitive financial data. This information flows through credit bureaus, gets stored in centralized databases, and leaves you vulnerable to breaches, discrimination, and unwanted profiling.
@@ -136,19 +140,42 @@ export ledger admin: ZswapCoinPublicKey;
 - **Map**: Key-value storage (used for loans per user)
 - **Nested Maps**: `loans` maps user public keys to their loan history
 
-### Identity: `ownPublicKey()` and Authorization
+### Identity and Authorization
 
-Every transaction on Midnight has a caller identity. The `ownPublicKey()` function returns the caller's Zswap public key, enabling authorization patterns:
+Every transaction on Midnight has a caller identity. The `ownPublicKey()` function returns the caller's Zswap public key. It is the correct primitive for identifying the **target** of an operation — for example, deriving a per-user public key, or checking blacklist membership for the caller. It is **not** proof of key ownership: `ownPublicKey()` returns a value the prover claims, and any value already on the ledger can be replayed by any chain reader. Using it in an `assert` for admin authorization is a vulnerability.
+
+Authorization requires the caller to prove knowledge of a private secret whose hash is on the ledger. ZKLoan implements this with the witness-derived keypair pattern:
 
 ```compact
+export struct AdminSecretKey { bytes: Bytes<32>; }
+export struct AdminPublicKey { bytes: Bytes<32>; }
+
+export ledger contractAdmin: AdminPublicKey;
+witness getAdminSecret(): AdminSecretKey;
+
+constructor() {
+    contractAdmin = disclose(deriveAdminPublicKey(getAdminSecret()));
+}
+
+export pure circuit deriveAdminPublicKey(sk: AdminSecretKey): AdminPublicKey {
+    return AdminPublicKey {
+        bytes: persistentHash<Vector<2, Bytes<32>>>([
+            pad(32, "zkloan:admin:pk:v1"),
+            sk.bytes
+        ])
+    };
+}
+
 export circuit blacklistUser(account: ZswapCoinPublicKey): [] {
-    assert(ownPublicKey() == admin, "Only admin can blacklist users");
+    assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can blacklist users");
     blacklist.insert(disclose(account));
     return [];
 }
 ```
 
-This is similar to Solidity's `msg.sender`, but integrated with Midnight's shielded identity system.
+The admin holds a 32-byte secret in private state. The ledger stores only its derived public key. Inside the ZK circuit, the equality `contractAdmin == deriveAdminPublicKey(getAdminSecret())` enforces that the caller possesses the preimage of the public value. The domain-separator string (`"zkloan:admin:pk:v1"`) binds the hash to this contract so the same secret cannot be replayed against a different deployment.
+
+Handing the role over uses a separate `rotateAdmin(newAdmin: AdminPublicKey)` circuit. The new admin generates their secret locally, derives their public key off-chain, and shares only the resulting 32 bytes — no private key is ever transmitted.
 
 ---
 

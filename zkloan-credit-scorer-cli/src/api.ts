@@ -243,14 +243,24 @@ export const removeBlacklistUser = async (
   return finalizedTxData.public;
 };
 
-export const transferAdmin = async (
+// Hand the admin role over by writing the new admin's derived public key
+// to the ledger. The new admin generates their secret locally and computes
+// `deriveAdminPublicKey(secret)` off-chain; only the resulting 32-byte
+// public key crosses the wire. No private key is ever transmitted.
+export const rotateAdmin = async (
   contract: DeployedZKLoanCreditScorerContract,
-  newAdmin: Uint8Array,
+  newAdminPublicKey: Uint8Array,
 ): Promise<FinalizedTxData> => {
-  logger.info('Transferring admin role...');
-  const finalizedTxData = await contract.callTx.transferAdmin({ bytes: newAdmin });
+  logger.info('Rotating admin role to new derived public key...');
+  const finalizedTxData = await contract.callTx.rotateAdmin({ bytes: newAdminPublicKey });
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
+};
+
+// Compute the AdminPublicKey for a given secret. Run by a prospective new
+// admin to obtain the 32-byte public key they hand to the current admin.
+export const deriveAdminPublicKey = (adminSecretKey: Uint8Array): Uint8Array => {
+  return pureCircuits.deriveAdminPublicKey({ bytes: adminSecretKey }).bytes;
 };
 
 export const registerProvider = async (
@@ -284,7 +294,7 @@ export const displayContractState = async (
     logger.info(`There is no ZKLoan contract deployed at ${contractAddress}.`);
   } else {
     logger.info(`Contract address: ${contractAddress}`);
-    logger.info(`Admin: ${Buffer.from(ledgerState.admin.bytes).toString('hex')}`);
+    logger.info(`Admin public key: ${Buffer.from(ledgerState.contractAdmin.bytes).toString('hex')}`);
     logger.info(`Blacklist size: ${ledgerState.blacklist.size()}`);
   }
   return { contractAddress, ledgerState };

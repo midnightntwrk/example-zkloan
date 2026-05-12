@@ -132,6 +132,7 @@ export const PrivateStateCard: React.FC = () => {
     setSelectedProfile(index);
     const profile = userProfiles[index];
     setPrivateState({
+      ...privateState,
       creditScore: BigInt(profile.creditScore),
       monthlyIncome: BigInt(profile.monthlyIncome),
       monthsAsCustomer: BigInt(profile.monthsAsCustomer),

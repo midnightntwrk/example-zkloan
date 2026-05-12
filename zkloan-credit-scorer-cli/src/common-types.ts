@@ -17,7 +17,7 @@ import { ZKLoanCreditScorer, type ZKLoanCreditScorerPrivateState } from 'zkloan-
 import type { MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
 
-export type ZKLoanCreditScorerCircuits = 'requestLoan' | 'changePin' | 'blacklistUser' | 'removeBlacklistUser' | 'transferAdmin' | 'respondToLoan' | 'registerProvider' | 'removeProvider';
+export type ZKLoanCreditScorerCircuits = 'requestLoan' | 'changePin' | 'blacklistUser' | 'removeBlacklistUser' | 'rotateAdmin' | 'respondToLoan' | 'registerProvider' | 'removeProvider';
 
 export const ZKLoanCreditScorerPrivateStateId = 'zkLoanCreditScorerPrivateState';
 

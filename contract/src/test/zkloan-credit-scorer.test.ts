@@ -25,7 +25,9 @@ setNetworkId("undeployed");
 
 describe("ZKLoanCreditScorer smart contract", () => {
 
-  // Helper: set up private state with valid attestation for a given profile
+  // Helper: set up private state with valid attestation for a given profile.
+  // Preserves the simulator's admin secret so subsequent admin circuit calls
+  // still pass the in-circuit equality check against `contractAdmin`.
   function setAttestedPrivateState(
     simulator: ZKLoanCreditScorerSimulator,
     creditScore: bigint,
@@ -42,6 +44,7 @@ describe("ZKLoanCreditScorer smart contract", () => {
       simulator.providerSk,
       userPubKeyHash,
       simulator.providerId,
+      simulator.adminSecretKey,
     );
   }
 
@@ -309,6 +312,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
       simulator.providerSk,
       newPinPubKeyHash,
       simulator.providerId,
+      simulator.adminSecretKey,
     );
     for (let i = 1; i <= 3; i++) {
       simulator.requestLoan(BigInt(i * 100), newPin);
@@ -388,18 +392,18 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
   });
 
   // ============================================================
-  // Admin Transfer
+  // Admin Rotation
   // ============================================================
 
-  it("allows admin to transfer admin role to new admin", () => {
+  it("allows admin to rotate admin role to a new derived public key", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const newAdminKey = simulator.createTestUser("NewAdmin").left.bytes;
+    const newAdminSecret = simulator.generateAdminSecret();
+    const newAdminPublicKey = simulator.deriveAdminPublicKey(newAdminSecret);
 
-    // Transfer admin to new admin
-    simulator.transferAdmin(newAdminKey);
+    simulator.rotateAdmin(newAdminPublicKey);
 
     const ledger = simulator.getLedger();
-    expect(ledger.admin.bytes).toEqual(newAdminKey);
+    expect(ledger.contractAdmin.bytes).toEqual(newAdminPublicKey);
   });
 
   // ============================================================
@@ -532,13 +536,14 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
   it("throws when non-admin tries to blacklist a user", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
     const charlieZwapKey = simulator.createTestUser("Charlie").left.bytes;
 
-    // Transfer admin to Bob first (Alice is initial admin)
-    simulator.transferAdmin(bobZwapKey);
+    // Rotate admin to a fresh secret the simulator does not hold. The
+    // simulator's private state still carries the original admin secret,
+    // so the in-circuit equality check fails on the next admin call.
+    const bobAdminSecret = simulator.generateAdminSecret();
+    simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
-    // Now Alice (non-admin) tries to blacklist Charlie - should fail
     expect(() => {
       simulator.blacklistUser(charlieZwapKey);
     }).toThrow("Only admin can blacklist users");
@@ -546,33 +551,32 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
   it("throws when non-admin tries to remove from blacklist", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
     const charlieZwapKey = simulator.createTestUser("Charlie").left.bytes;
 
-    // First blacklist Charlie while Alice is admin
+    // First blacklist Charlie while the simulator still holds the admin secret
     simulator.blacklistUser(charlieZwapKey);
 
-    // Transfer admin to Bob
-    simulator.transferAdmin(bobZwapKey);
+    // Rotate admin to a fresh secret the simulator does not hold
+    const bobAdminSecret = simulator.generateAdminSecret();
+    simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
-    // Now Alice (non-admin) tries to remove Charlie from blacklist - should fail
     expect(() => {
       simulator.removeBlacklistUser(charlieZwapKey);
     }).toThrow("Only admin can remove from blacklist");
   });
 
-  it("throws when non-admin tries to transfer admin", () => {
+  it("throws when non-admin tries to rotate admin", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
-    const charlieZwapKey = simulator.createTestUser("Charlie").left.bytes;
 
-    // Transfer admin to Bob first
-    simulator.transferAdmin(bobZwapKey);
+    // Rotate admin to a fresh secret the simulator does not hold
+    const bobAdminSecret = simulator.generateAdminSecret();
+    simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
-    // Now Alice (non-admin) tries to transfer admin to Charlie - should fail
+    // Original holder tries to rotate again — should fail
+    const charlieAdminSecret = simulator.generateAdminSecret();
     expect(() => {
-      simulator.transferAdmin(charlieZwapKey);
-    }).toThrow("Only admin can transfer admin role");
+      simulator.rotateAdmin(simulator.deriveAdminPublicKey(charlieAdminSecret));
+    }).toThrow("Only admin can rotate admin role");
   });
 
   // ============================================================
@@ -661,6 +665,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const pubKeyHash1 = simulator.computeUserPubKeyHash(aliceZwapKey, pin1);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, simulator.providerSk, pubKeyHash1, simulator.providerId,
+      simulator.adminSecretKey,
     );
 
     const pubKey1 = simulator.publicKey(aliceZwapKey, pin1);
@@ -673,6 +678,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const pubKeyHash2 = simulator.computeUserPubKeyHash(aliceZwapKey, pin2);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, simulator.providerSk, pubKeyHash2, simulator.providerId,
+      simulator.adminSecretKey,
     );
 
     // Request loan with pin2
@@ -710,42 +716,52 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
   // Admin Transfer Edge Cases
   // ============================================================
 
-  it("new admin can perform admin operations after transfer", () => {
+  it("new admin can perform admin operations after rotation", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
     const charlieZwapKey = simulator.createTestUser("Charlie").left.bytes;
 
-    simulator.transferAdmin(charlieZwapKey);
+    // Rotate to a new admin secret, then swap the simulator's local secret
+    // to that of the new admin. The new admin now passes the auth check.
+    const newAdminSecret = simulator.generateAdminSecret();
+    const newAdminPublicKey = simulator.deriveAdminPublicKey(newAdminSecret);
+    simulator.rotateAdmin(newAdminPublicKey);
+    simulator.setAdminSecret(newAdminSecret);
+
+    simulator.blacklistUser(charlieZwapKey);
 
     const ledger = simulator.getLedger();
-    expect(ledger.admin.bytes).toEqual(charlieZwapKey);
+    expect(ledger.contractAdmin.bytes).toEqual(newAdminPublicKey);
+    expect(ledger.blacklist.member({ bytes: charlieZwapKey })).toBeTruthy();
   });
 
-  it("old admin cannot perform admin operations after transfer", () => {
+  it("old admin cannot perform admin operations after rotation", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
     const charlieZwapKey = simulator.createTestUser("Charlie").left.bytes;
 
-    // Transfer admin to Bob
-    simulator.transferAdmin(bobZwapKey);
+    // Rotate to a fresh secret the simulator does not hold
+    const bobAdminSecret = simulator.generateAdminSecret();
+    simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
-    // Alice (old admin) tries to blacklist Charlie - should fail
+    // Original holder tries to blacklist Charlie - should fail
     expect(() => {
       simulator.blacklistUser(charlieZwapKey);
     }).toThrow("Only admin can blacklist users");
   });
 
-  it("can chain multiple admin transfers", () => {
+  it("can chain multiple admin rotations", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const aliceZwapKey = simulator.createTestUser("Alice").left.bytes;
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
 
     let ledger = simulator.getLedger();
-    expect(ledger.admin.bytes).toEqual(aliceZwapKey);
+    expect(ledger.contractAdmin.bytes).toEqual(
+      simulator.deriveAdminPublicKey(simulator.adminSecretKey),
+    );
 
-    // Transfer admin to Bob
-    simulator.transferAdmin(bobZwapKey);
+    // Rotate to Bob
+    const bobAdminSecret = simulator.generateAdminSecret();
+    const bobAdminPublicKey = simulator.deriveAdminPublicKey(bobAdminSecret);
+    simulator.rotateAdmin(bobAdminPublicKey);
     ledger = simulator.getLedger();
-    expect(ledger.admin.bytes).toEqual(bobZwapKey);
+    expect(ledger.contractAdmin.bytes).toEqual(bobAdminPublicKey);
   });
 
   // ============================================================
@@ -1026,6 +1042,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const pubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, userPin);
     const validState = createCustomSignedProfile(
       750n, 2500n, 30n, simulator.providerSk, pubKeyHash, simulator.providerId,
+      simulator.adminSecretKey,
     );
     simulator.circuitContext.currentPrivateState = {
       ...validState,
@@ -1050,6 +1067,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const pubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, userPin);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, otherProvider.sk, pubKeyHash, 99n, // unregistered provider ID
+      simulator.adminSecretKey,
     );
 
     expect(() => {
@@ -1084,6 +1102,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const bobPubKeyHash = simulator.computeUserPubKeyHash(bobZwapKey, userPin);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, simulator.providerSk, bobPubKeyHash, simulator.providerId,
+      simulator.adminSecretKey,
     );
 
     // Alice tries to use Bob's attestation - should fail because userPubKeyHash won't match
@@ -1094,14 +1113,13 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
   it("throws when non-admin tries to register provider", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
 
-    // Transfer admin to Bob
-    simulator.transferAdmin(bobZwapKey);
+    // Rotate admin to a fresh secret the simulator does not hold
+    const bobAdminSecret = simulator.generateAdminSecret();
+    simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
     const newProvider = generateProviderKeyPair();
 
-    // Alice (non-admin) tries to register a provider - should fail
     expect(() => {
       simulator.registerProvider(2n, newProvider.pk);
     }).toThrow("Only admin can register providers");
@@ -1109,12 +1127,11 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
   it("throws when non-admin tries to remove provider", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
 
-    // Transfer admin to Bob
-    simulator.transferAdmin(bobZwapKey);
+    // Rotate admin to a fresh secret the simulator does not hold
+    const bobAdminSecret = simulator.generateAdminSecret();
+    simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
-    // Alice (non-admin) tries to remove a provider - should fail
     expect(() => {
       simulator.removeProvider(simulator.providerId);
     }).toThrow("Only admin can remove providers");
@@ -1147,6 +1164,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     // Use provider 2 for second loan
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, provider2.sk, pubKeyHash, provider2Id,
+      simulator.adminSecretKey,
     );
     simulator.requestLoan(3000n, userPin);
 
@@ -1176,6 +1194,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const pubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, userPin);
     const validState = createCustomSignedProfile(
       650n, 1600n, 10n, simulator.providerSk, pubKeyHash, simulator.providerId,
+      simulator.adminSecretKey,
     );
 
     // Tamper with credit score (signature was for 650, we change to 750)
