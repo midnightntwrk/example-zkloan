@@ -113,7 +113,7 @@ import { NetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 networkId: NetworkId.Testnet
 
 // NEW
-networkId: 'testnet-02'  // 'mainnet' | 'devnet' | 'undeployed'
+networkId: 'preprod'  // 'mainnet' | 'preprod' | 'undeployed'
 ```
 
 ### 7. Package Renames

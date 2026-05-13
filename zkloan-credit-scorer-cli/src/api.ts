@@ -132,8 +132,18 @@ export const deploy = async (
 const bytes32Type = new CompactTypeBytes(32);
 const { pureCircuits } = ZKLoanCreditScorer;
 
-export const computeUserPubKeyHash = (zwapKeyBytes: Uint8Array, pin: bigint): bigint => {
-  const pubKey = pureCircuits.publicKey(zwapKeyBytes, pin);
+// Derive the per-user public key off-chain from the local user secret and a
+// PIN, using the same pure circuit the contract uses on-chain. The user
+// secret comes from private state — it is the only authoritative identity
+// for the caller, since `ownPublicKey()` is prover-claimed and not used.
+export const deriveUserPublicKey = (userSecretKey: Uint8Array, pin: bigint): Uint8Array => {
+  return pureCircuits.deriveUserPublicKey({ bytes: userSecretKey }, pin).bytes;
+};
+
+// Compute the userPubKeyHash for an attestation message. The contract
+// computes this inside `requestLoan` via `transientHash(deriveUserPublicKey(secret, pin))`.
+export const computeUserPubKeyHash = (userSecretKey: Uint8Array, pin: bigint): bigint => {
+  const pubKey = deriveUserPublicKey(userSecretKey, pin);
   return transientHash(bytes32Type, pubKey);
 };
 
@@ -169,18 +179,17 @@ export const requestLoan = async (
   providers: ZKLoanCreditScorerProviders,
   amountRequested: bigint,
   secretPin: bigint,
-  zwapKeyBytes: Uint8Array,
   attestationApiUrl: string,
 ): Promise<FinalizedTxData> => {
-  // 1. Compute user pub key hash (same as the circuit does)
-  const userPubKeyHash = computeUserPubKeyHash(zwapKeyBytes, secretPin);
-  logger.info(`Computed userPubKeyHash for attestation`);
-
-  // 2. Get current private state
+  // 1. Get current private state (must contain `userSecretKey`)
   const currentState = await providers.privateStateProvider.get('zkLoanCreditScorerPrivateState');
   if (!currentState) {
     throw new Error('No private state found');
   }
+
+  // 2. Compute user pub key hash from the user secret (same as the circuit does)
+  const userPubKeyHash = computeUserPubKeyHash(currentState.userSecretKey, secretPin);
+  logger.info(`Computed userPubKeyHash for attestation`);
 
   // 3. Fetch attestation signature from API
   logger.info(`Fetching attestation from ${attestationApiUrl}...`);
@@ -223,22 +232,29 @@ export const changePin = async (
   return finalizedTxData.public;
 };
 
+// Blacklist a user by their derived `UserPublicKey` (the value the contract
+// checks inside `assert(!blacklist.member(deriveUserPublicKey(...)))`). The
+// admin must obtain this 32-byte value out of band — typically by reading
+// the on-chain `loans` map keys for users who have already interacted, or
+// by asking the target to share their derived pubkey directly. Note that
+// admin cannot blacklist by wallet address, since `ownPublicKey()` is not
+// trusted by the contract.
 export const blacklistUser = async (
   contract: DeployedZKLoanCreditScorerContract,
-  account: Uint8Array,
+  userPublicKey: Uint8Array,
 ): Promise<FinalizedTxData> => {
-  logger.info('Blacklisting user...');
-  const finalizedTxData = await contract.callTx.blacklistUser({ bytes: account });
+  logger.info('Blacklisting user public key...');
+  const finalizedTxData = await contract.callTx.blacklistUser({ bytes: userPublicKey });
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
 
 export const removeBlacklistUser = async (
   contract: DeployedZKLoanCreditScorerContract,
-  account: Uint8Array,
+  userPublicKey: Uint8Array,
 ): Promise<FinalizedTxData> => {
-  logger.info('Removing user from blacklist...');
-  const finalizedTxData = await contract.callTx.removeBlacklistUser({ bytes: account });
+  logger.info('Removing user public key from blacklist...');
+  const finalizedTxData = await contract.callTx.removeBlacklistUser({ bytes: userPublicKey });
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
@@ -257,10 +273,13 @@ export const rotateAdmin = async (
   return finalizedTxData.public;
 };
 
-// Compute the AdminPublicKey for a given secret. Run by a prospective new
-// admin to obtain the 32-byte public key they hand to the current admin.
-export const deriveAdminPublicKey = (adminSecretKey: Uint8Array): Uint8Array => {
-  return pureCircuits.deriveAdminPublicKey({ bytes: adminSecretKey }).bytes;
+// Compute the AdminPublicKey for a given user secret. Run by a prospective
+// new admin to obtain the 32-byte public key they hand to the current admin.
+// Same `userSecretKey` is used for both per-user identity (PIN-bound) and
+// the admin role (no PIN) — different domain separators inside the contract
+// keep them logically independent.
+export const deriveAdminPublicKey = (userSecretKey: Uint8Array): Uint8Array => {
+  return pureCircuits.deriveAdminPublicKey({ bytes: userSecretKey }).bytes;
 };
 
 export const registerProvider = async (

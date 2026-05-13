@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type ZKLoanCreditScorerPrivateState } from '../../witnesses.js';
-import { pureCircuits, type SchnorrSignature } from '../../managed/zkloan-credit-scorer/contract/index.js';
+import { pureCircuits, type Schnorr_SchnorrSignature } from '../../managed/zkloan-credit-scorer/contract/index.js';
 import { ecMulGenerator, addField, mulField, type JubjubPoint } from '@midnight-ntwrk/compact-runtime';
 import * as crypto from 'crypto';
 
@@ -90,7 +90,7 @@ const TWO_248 = 4523128485832663883733241601901871400518358776001584532791311875
 export function schnorrSign(
   sk: bigint,
   msg: bigint[],
-): SchnorrSignature {
+): Schnorr_SchnorrSignature {
   const pk = ecMulGenerator(sk);
   const k = randomScalar();
   const R = ecMulGenerator(k);
@@ -105,7 +105,7 @@ export function schnorrSign(
   return { announcement: R, response: s };
 }
 
-export function generateAdminSecret(): Uint8Array {
+export function generateUserSecret(): Uint8Array {
   return new Uint8Array(crypto.randomBytes(32));
 }
 
@@ -114,7 +114,7 @@ export function createSignedUserProfile(
   providerSk: bigint,
   userPubKeyHash: bigint,
   providerId: bigint = 1n,
-  adminSecretKey: Uint8Array = generateAdminSecret(),
+  userSecretKey: Uint8Array = generateUserSecret(),
 ): ZKLoanCreditScorerPrivateState {
   const profile = userProfiles[index];
   if (!profile) {
@@ -136,7 +136,7 @@ export function createSignedUserProfile(
     monthsAsCustomer: BigInt(profile.monthsAsCustomer),
     attestationSignature: signature,
     attestationProviderId: providerId,
-    adminSecretKey,
+    userSecretKey,
   };
 }
 
@@ -147,7 +147,7 @@ export function createCustomSignedProfile(
   providerSk: bigint,
   userPubKeyHash: bigint,
   providerId: bigint = 1n,
-  adminSecretKey: Uint8Array = generateAdminSecret(),
+  userSecretKey: Uint8Array = generateUserSecret(),
 ): ZKLoanCreditScorerPrivateState {
   const msg: bigint[] = [creditScore, monthlyIncome, monthsAsCustomer, userPubKeyHash];
   const signature = schnorrSign(providerSk, msg);
@@ -158,13 +158,13 @@ export function createCustomSignedProfile(
     monthsAsCustomer,
     attestationSignature: signature,
     attestationProviderId: providerId,
-    adminSecretKey,
+    userSecretKey,
   };
 }
 
 export function getUserProfile(
   index?: number,
-  adminSecretKey: Uint8Array = generateAdminSecret(),
+  userSecretKey: Uint8Array = generateUserSecret(),
 ): ZKLoanCreditScorerPrivateState {
   let profile;
   if (index !== undefined) {
@@ -182,6 +182,6 @@ export function getUserProfile(
     monthsAsCustomer: BigInt(profile.monthsAsCustomer),
     attestationSignature: { announcement: { x: 0n, y: 0n }, response: 0n },
     attestationProviderId: 0n,
-    adminSecretKey,
+    userSecretKey,
   };
 }

@@ -63,8 +63,6 @@ describe('ZKLoan Credit Scorer API', () => {
     const secretPin = 1234n;
     const amountRequested = 5000n;
 
-    // Placeholder; the skipped test does not exercise the ZK proof path.
-    const zwapKeyBytes = new Uint8Array(32);
     const attestationApiUrl = process.env.ATTESTATION_API_URL ?? 'http://localhost:4000';
 
     const response = await api.requestLoan(
@@ -72,7 +70,6 @@ describe('ZKLoan Credit Scorer API', () => {
       providers,
       amountRequested,
       secretPin,
-      zwapKeyBytes,
       attestationApiUrl,
     );
     expect(response.txId).toMatch(/[0-9a-f]{64}/);

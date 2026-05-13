@@ -68,3 +68,6 @@ zkloan-credit-scorer-ui/public/zkir/
 .playwright-mcp/
 bboard-ui/
 updated_starter_0.1/
+
+# Local plugin configs (e.g. Midnight Expert marketplace)
+.midnight-expert/

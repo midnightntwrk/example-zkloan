@@ -4,7 +4,7 @@
 
 ---
 
-> **Update (2026):** The original version of this post recommended `ownPublicKey()` for admin authorization. That pattern is insecure — `ownPublicKey()` does not prove key ownership, and any value on the ledger can be replayed. The code examples below have been updated to use the witness-derived keypair pattern. See the [contract source](contract/src/zkloan-credit-scorer.compact) for the current authoritative implementation.
+> **Update (2026):** Earlier versions of this post used `ownPublicKey()` for caller identity — for admin checks, blacklist lookups, and PIN-bound per-user key derivation. That whole pattern is insecure: `ownPublicKey()` returns a value the prover claims, with no cryptographic binding to the transaction signer. Any assertion or identity derivation that depends on it is bypassable. The code examples below have been updated to derive all caller identity from a single witness-supplied `userSecretKey`. `ownPublicKey()` is no longer called by this contract. See the [contract source](contract/src/zkloan-credit-scorer.compact) for the current authoritative implementation.
 
 ---
 
@@ -142,22 +142,37 @@ export ledger admin: ZswapCoinPublicKey;
 
 ### Identity and Authorization
 
-Every transaction on Midnight has a caller identity. The `ownPublicKey()` function returns the caller's Zswap public key. It is the correct primitive for identifying the **target** of an operation — for example, deriving a per-user public key, or checking blacklist membership for the caller. It is **not** proof of key ownership: `ownPublicKey()` returns a value the prover claims, and any value already on the ledger can be replayed by any chain reader. Using it in an `assert` for admin authorization is a vulnerability.
+`ownPublicKey()` returns the value the prover claims as their Zswap public key. It is supplied to the circuit context as a parameter; the protocol does not cross-check it against the wallet that signed the transaction. Any caller can pass any 32-byte value. As a result, any assertion that depends on `ownPublicKey()` — for admin auth, blacklist membership, or PIN-bound identity derivation — is bypassable. The pattern is wrong everywhere it appears, not just in admin checks.
 
-Authorization requires the caller to prove knowledge of a private secret whose hash is on the ledger. ZKLoan implements this with the witness-derived keypair pattern:
+The only safe use of `ownPublicKey()` is identifying the recipient of an outgoing shielded token transfer. If the prover lies, they lose access to their own tokens; there is no security boundary to bypass. For everything else — gating access, tracking per-user state, blacklisting — the caller's identity must come from a witness-supplied secret.
+
+ZKLoan implements this with a single `userSecretKey` in private state and two domain-separated derivations: one for the admin role, one for per-user PIN-bound identity.
 
 ```compact
-export struct AdminSecretKey { bytes: Bytes<32>; }
+export struct UserSecretKey { bytes: Bytes<32>; }
+export struct UserPublicKey { bytes: Bytes<32>; }
 export struct AdminPublicKey { bytes: Bytes<32>; }
 
 export ledger contractAdmin: AdminPublicKey;
-witness getAdminSecret(): AdminSecretKey;
+export ledger blacklist: Set<UserPublicKey>;
+witness getUserSecret(): UserSecretKey;
 
 constructor() {
-    contractAdmin = disclose(deriveAdminPublicKey(getAdminSecret()));
+    contractAdmin = disclose(deriveAdminPublicKey(getUserSecret()));
 }
 
-export pure circuit deriveAdminPublicKey(sk: AdminSecretKey): AdminPublicKey {
+export pure circuit deriveUserPublicKey(sk: UserSecretKey, pin: Uint<16>): UserPublicKey {
+    const pinBytes = persistentHash<Uint<16>>(pin);
+    return UserPublicKey {
+        bytes: persistentHash<Vector<3, Bytes<32>>>([
+            pad(32, "zkloan:user:pk:v1"),
+            pinBytes,
+            sk.bytes
+        ])
+    };
+}
+
+export pure circuit deriveAdminPublicKey(sk: UserSecretKey): AdminPublicKey {
     return AdminPublicKey {
         bytes: persistentHash<Vector<2, Bytes<32>>>([
             pad(32, "zkloan:admin:pk:v1"),
@@ -166,16 +181,16 @@ export pure circuit deriveAdminPublicKey(sk: AdminSecretKey): AdminPublicKey {
     };
 }
 
-export circuit blacklistUser(account: ZswapCoinPublicKey): [] {
-    assert(contractAdmin == deriveAdminPublicKey(getAdminSecret()), "Only admin can blacklist users");
+export circuit blacklistUser(account: UserPublicKey): [] {
+    assert(contractAdmin == deriveAdminPublicKey(getUserSecret()), "Only admin can blacklist users");
     blacklist.insert(disclose(account));
     return [];
 }
 ```
 
-The admin holds a 32-byte secret in private state. The ledger stores only its derived public key. Inside the ZK circuit, the equality `contractAdmin == deriveAdminPublicKey(getAdminSecret())` enforces that the caller possesses the preimage of the public value. The domain-separator string (`"zkloan:admin:pk:v1"`) binds the hash to this contract so the same secret cannot be replayed against a different deployment.
+The deployer holds a 32-byte `userSecretKey` in private state; the ledger stores only its derived admin public key. Inside the ZK circuit, the equality `contractAdmin == deriveAdminPublicKey(getUserSecret())` enforces that the caller possesses the preimage. The blacklist stores `UserPublicKey` values — also witness-derived — so a malicious caller cannot bypass it by claiming a different `ownPublicKey()`. The domain-separator strings (`"zkloan:admin:pk:v1"` vs `"zkloan:user:pk:v1"`) keep the admin and per-user pubkeys uncorrelated even though they share a secret.
 
-Handing the role over uses a separate `rotateAdmin(newAdmin: AdminPublicKey)` circuit. The new admin generates their secret locally, derives their public key off-chain, and shares only the resulting 32 bytes — no private key is ever transmitted.
+Handing the admin role over uses a separate `rotateAdmin(newAdmin: AdminPublicKey)` circuit. The new admin generates their own `userSecretKey` locally, derives their admin public key off-chain, and shares only the resulting 32 bytes — no private key is ever transmitted.
 
 ---
 
@@ -335,11 +350,14 @@ The user can then respond to the proposal:
 ```compact
 export circuit respondToLoan(loanId: Uint<16>, secretPin: Uint<16>,
                              accept: Boolean): [] {
-    // Verify user identity via PIN-derived public key
-    const requesterPubKey = publicKey(ownPublicKey().bytes, secretPin);
+    // Caller identity is derived from the witness secret + PIN. The contract
+    // never reads `ownPublicKey()`, so a malicious caller cannot impersonate
+    // the loan owner by claiming a different wallet pubkey.
+    const requesterPubKey = deriveUserPublicKey(getUserSecret(), secretPin);
+    const disclosed = disclose(requesterPubKey);
 
     // Ensure loan exists and is in Proposed status
-    const existingLoan = loans.lookup(requesterPubKey).lookup(loanId);
+    const existingLoan = loans.lookup(disclosed.bytes).lookup(loanId);
     assert(existingLoan.status == LoanStatus.Proposed,
            "Loan is not in Proposed status");
 
@@ -350,7 +368,7 @@ export circuit respondToLoan(loanId: Uint<16>, secretPin: Uint<16>,
         : LoanApplication { authorizedAmount: 0,
                            status: LoanStatus.NotAccepted };
 
-    loans.lookup(requesterPubKey).insert(loanId, disclose(updatedLoan));
+    loans.lookup(disclosed.bytes).insert(loanId, disclose(updatedLoan));
 }
 ```
 

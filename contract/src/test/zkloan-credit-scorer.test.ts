@@ -26,8 +26,9 @@ setNetworkId("undeployed");
 describe("ZKLoanCreditScorer smart contract", () => {
 
   // Helper: set up private state with valid attestation for a given profile.
-  // Preserves the simulator's admin secret so subsequent admin circuit calls
-  // still pass the in-circuit equality check against `contractAdmin`.
+  // Binds the attestation message to the simulator's witness-derived user
+  // pubkey at the given PIN. The simulator's `userSecretKey` is preserved so
+  // both the admin guard and the PIN-bound user identity remain consistent.
   function setAttestedPrivateState(
     simulator: ZKLoanCreditScorerSimulator,
     creditScore: bigint,
@@ -35,8 +36,7 @@ describe("ZKLoanCreditScorer smart contract", () => {
     monthsAsCustomer: bigint,
     pin: bigint = 1234n,
   ) {
-    const userZwapKey = simulator.createTestUser("Alice").left.bytes;
-    const userPubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, pin);
+    const userPubKeyHash = simulator.computeUserPubKeyHash(simulator.userSecretKey, pin);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       creditScore,
       monthlyIncome,
@@ -44,7 +44,7 @@ describe("ZKLoanCreditScorer smart contract", () => {
       simulator.providerSk,
       userPubKeyHash,
       simulator.providerId,
-      simulator.adminSecretKey,
+      simulator.userSecretKey,
     );
   }
 
@@ -65,7 +65,7 @@ describe("ZKLoanCreditScorer smart contract", () => {
     const userZwapKey = simulator.createTestUser("Alice").left.bytes;
     const userPin = 1234n;
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Request an amount higher than the tier's max
     simulator.requestLoan(1500n, userPin);
@@ -83,7 +83,7 @@ describe("ZKLoanCreditScorer smart contract", () => {
 
     setAttestedPrivateState(simulator, 650n, 1600n, 10n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Request an amount lower than the tier's max
     simulator.requestLoan(5000n, userPin);
@@ -103,7 +103,7 @@ describe("ZKLoanCreditScorer smart contract", () => {
 
     setAttestedPrivateState(simulator, 590n, 1000n, 1n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(10000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -118,7 +118,7 @@ describe("ZKLoanCreditScorer smart contract", () => {
 
     setAttestedPrivateState(simulator, 500n, 1000n, 1n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(1000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -133,7 +133,7 @@ describe("ZKLoanCreditScorer smart contract", () => {
 
     setAttestedPrivateState(simulator, 800n, 3000n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     simulator.requestLoan(100n, userPin);
     simulator.requestLoan(200n, userPin);
@@ -148,11 +148,13 @@ describe("ZKLoanCreditScorer smart contract", () => {
 
   it("throws an error if the user is blacklisted", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const userZwapKey = simulator.createTestUser("Alice").left.bytes;
     const userPin = 1234n;
 
-    // Blacklist the user's Zswap key
-    simulator.blacklistUser(userZwapKey);
+    // Blacklist the caller's *derived* user pubkey at this PIN. The contract
+    // checks `assert(!blacklist.member(deriveUserPublicKey(getUserSecret(), pin)))`
+    // inside the proof, so the blacklist key must match the witness-derived value.
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
+    simulator.blacklistUser(userPubKey);
 
     expect(() => {
       simulator.requestLoan(1000n, userPin);
@@ -186,8 +188,8 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 800n, 3000n, 30n, oldPin);
 
-    const oldPubKey = simulator.publicKey(userZwapKey, oldPin);
-    const newPubKey = simulator.publicKey(userZwapKey, newPin);
+    const oldPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, oldPin);
+    const newPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, newPin);
 
     // Create 3 loans
     simulator.requestLoan(100n, oldPin); // Loan 1
@@ -220,8 +222,8 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 800n, 3000n, 30n, oldPin);
 
-    const oldPubKey = simulator.publicKey(userZwapKey, oldPin);
-    const newPubKey = simulator.publicKey(userZwapKey, newPin);
+    const oldPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, oldPin);
+    const newPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, newPin);
 
     // Create 7 loans
     for (let i = 1; i <= 7; i++) {
@@ -266,7 +268,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     const oldPin = 1234n;
     const newPin = 9876n;
-    const oldPubKey = simulator.publicKey(userZwapKey, oldPin);
+    const oldPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, oldPin);
 
     setAttestedPrivateState(simulator, 800n, 3000n, 30n, oldPin);
 
@@ -297,8 +299,8 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 800n, 3000n, 30n, oldPin);
 
-    const oldPubKey = simulator.publicKey(userZwapKey, oldPin);
-    const newPubKey = simulator.publicKey(userZwapKey, newPin);
+    const oldPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, oldPin);
+    const newPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, newPin);
 
     // Create 6 loans for the old PIN
     for (let i = 1; i <= 6; i++) {
@@ -306,13 +308,13 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     }
 
     // Create 3 loans for the new PIN - need attestation for new pin
-    const newPinPubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, newPin);
+    const newPinPubKeyHash = simulator.computeUserPubKeyHash(simulator.userSecretKey, newPin);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       800n, 3000n, 30n,
       simulator.providerSk,
       newPinPubKeyHash,
       simulator.providerId,
-      simulator.adminSecretKey,
+      simulator.userSecretKey,
     );
     for (let i = 1; i <= 3; i++) {
       simulator.requestLoan(BigInt(i * 100), newPin);
@@ -362,15 +364,16 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
   it("throws when blacklisted user tries to change PIN", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const userZwapKey = simulator.createTestUser("Alice").left.bytes;
     const oldPin = 1234n;
     const newPin = 5678n;
 
     // Create a loan first so the user exists
     simulator.requestLoan(100n, oldPin);
 
-    // Blacklist the user
-    simulator.blacklistUser(userZwapKey);
+    // Blacklist the caller's derived pubkey at the OLD pin — that's the value
+    // `changePin` will compute internally and pass to `blacklist.member`.
+    const userOldPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, oldPin);
+    simulator.blacklistUser(userOldPubKey);
 
     // Try to change PIN - should fail
     expect(() => {
@@ -397,7 +400,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
   it("allows admin to rotate admin role to a new derived public key", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const newAdminSecret = simulator.generateAdminSecret();
+    const newAdminSecret = simulator.generateUserSecret();
     const newAdminPublicKey = simulator.deriveAdminPublicKey(newAdminSecret);
 
     simulator.rotateAdmin(newAdminPublicKey);
@@ -417,7 +420,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 700n, 2000n, 24n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(10000n, userPin); // Request exactly at limit
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -432,7 +435,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 699n, 2000n, 24n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(15000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -447,7 +450,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 600n, 1500n, 1n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(10000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -462,7 +465,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 599n, 1500n, 1n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(10000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -477,7 +480,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 580n, 500n, 1n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(5000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -492,7 +495,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 579n, 5000n, 100n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(1000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -507,7 +510,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 1999n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(15000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -522,7 +525,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 23n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(15000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -541,7 +544,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     // Rotate admin to a fresh secret the simulator does not hold. The
     // simulator's private state still carries the original admin secret,
     // so the in-circuit equality check fails on the next admin call.
-    const bobAdminSecret = simulator.generateAdminSecret();
+    const bobAdminSecret = simulator.generateUserSecret();
     simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
     expect(() => {
@@ -557,7 +560,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     simulator.blacklistUser(charlieZwapKey);
 
     // Rotate admin to a fresh secret the simulator does not hold
-    const bobAdminSecret = simulator.generateAdminSecret();
+    const bobAdminSecret = simulator.generateUserSecret();
     simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
     expect(() => {
@@ -569,11 +572,11 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
 
     // Rotate admin to a fresh secret the simulator does not hold
-    const bobAdminSecret = simulator.generateAdminSecret();
+    const bobAdminSecret = simulator.generateUserSecret();
     simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
     // Original holder tries to rotate again — should fail
-    const charlieAdminSecret = simulator.generateAdminSecret();
+    const charlieAdminSecret = simulator.generateUserSecret();
     expect(() => {
       simulator.rotateAdmin(simulator.deriveAdminPublicKey(charlieAdminSecret));
     }).toThrow("Only admin can rotate admin role");
@@ -588,8 +591,8 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const userZwapKey = simulator.createTestUser("Alice").left.bytes;
     const userPin = 1234n;
 
-    const pubKey1 = simulator.publicKey(userZwapKey, userPin);
-    const pubKey2 = simulator.publicKey(userZwapKey, userPin);
+    const pubKey1 = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
+    const pubKey2 = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     expect(pubKey1).toEqual(pubKey2);
   });
@@ -600,20 +603,22 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const pin1 = 1234n;
     const pin2 = 5678n;
 
-    const pubKey1 = simulator.publicKey(userZwapKey, pin1);
-    const pubKey2 = simulator.publicKey(userZwapKey, pin2);
+    const pubKey1 = simulator.deriveUserPublicKey(simulator.userSecretKey, pin1);
+    const pubKey2 = simulator.deriveUserPublicKey(simulator.userSecretKey, pin2);
 
     expect(pubKey1).not.toEqual(pubKey2);
   });
 
   it("generates different public key for different users with same PIN", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const aliceZwapKey = simulator.createTestUser("Alice").left.bytes;
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
     const samePin = 1234n;
 
-    const alicePubKey = simulator.publicKey(aliceZwapKey, samePin);
-    const bobPubKey = simulator.publicKey(bobZwapKey, samePin);
+    // Two distinct users = two distinct secrets. With the witness-derived
+    // identity model, "different users" means different `userSecretKey`s.
+    const aliceSecret = simulator.generateUserSecret();
+    const bobSecret = simulator.generateUserSecret();
+    const alicePubKey = simulator.deriveUserPublicKey(aliceSecret, samePin);
+    const bobPubKey = simulator.deriveUserPublicKey(bobSecret, samePin);
 
     expect(alicePubKey).not.toEqual(bobPubKey);
   });
@@ -662,23 +667,23 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const pin2 = 2222n;
 
     // Sign for pin1
-    const pubKeyHash1 = simulator.computeUserPubKeyHash(aliceZwapKey, pin1);
+    const pubKeyHash1 = simulator.computeUserPubKeyHash(simulator.userSecretKey, pin1);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, simulator.providerSk, pubKeyHash1, simulator.providerId,
-      simulator.adminSecretKey,
+      simulator.userSecretKey,
     );
 
-    const pubKey1 = simulator.publicKey(aliceZwapKey, pin1);
-    const pubKey2 = simulator.publicKey(aliceZwapKey, pin2);
+    const pubKey1 = simulator.deriveUserPublicKey(simulator.userSecretKey, pin1);
+    const pubKey2 = simulator.deriveUserPublicKey(simulator.userSecretKey, pin2);
 
     // Request loan with pin1
     simulator.requestLoan(5000n, pin1);
 
     // Sign for pin2
-    const pubKeyHash2 = simulator.computeUserPubKeyHash(aliceZwapKey, pin2);
+    const pubKeyHash2 = simulator.computeUserPubKeyHash(simulator.userSecretKey, pin2);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, simulator.providerSk, pubKeyHash2, simulator.providerId,
-      simulator.adminSecretKey,
+      simulator.userSecretKey,
     );
 
     // Request loan with pin2
@@ -699,7 +704,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
     const alicePin = 1234n;
 
-    const alicePubKey = simulator.publicKey(aliceZwapKey, alicePin);
+    const alicePubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, alicePin);
 
     // Blacklist Bob's Zswap key (not Alice's)
     simulator.blacklistUser(bobZwapKey);
@@ -722,10 +727,10 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     // Rotate to a new admin secret, then swap the simulator's local secret
     // to that of the new admin. The new admin now passes the auth check.
-    const newAdminSecret = simulator.generateAdminSecret();
+    const newAdminSecret = simulator.generateUserSecret();
     const newAdminPublicKey = simulator.deriveAdminPublicKey(newAdminSecret);
     simulator.rotateAdmin(newAdminPublicKey);
-    simulator.setAdminSecret(newAdminSecret);
+    simulator.setUserSecret(newAdminSecret);
 
     simulator.blacklistUser(charlieZwapKey);
 
@@ -739,7 +744,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const charlieZwapKey = simulator.createTestUser("Charlie").left.bytes;
 
     // Rotate to a fresh secret the simulator does not hold
-    const bobAdminSecret = simulator.generateAdminSecret();
+    const bobAdminSecret = simulator.generateUserSecret();
     simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
     // Original holder tries to blacklist Charlie - should fail
@@ -753,11 +758,11 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     let ledger = simulator.getLedger();
     expect(ledger.contractAdmin.bytes).toEqual(
-      simulator.deriveAdminPublicKey(simulator.adminSecretKey),
+      simulator.deriveAdminPublicKey(simulator.userSecretKey),
     );
 
     // Rotate to Bob
-    const bobAdminSecret = simulator.generateAdminSecret();
+    const bobAdminSecret = simulator.generateUserSecret();
     const bobAdminPublicKey = simulator.deriveAdminPublicKey(bobAdminSecret);
     simulator.rotateAdmin(bobAdminPublicKey);
     ledger = simulator.getLedger();
@@ -775,7 +780,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Request more than Tier 1 max
     simulator.requestLoan(15000n, userPin);
@@ -792,7 +797,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Request exactly at Tier 1 max
     simulator.requestLoan(10000n, userPin);
@@ -809,7 +814,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Request less than Tier 1 max
     simulator.requestLoan(5000n, userPin);
@@ -826,7 +831,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Create a Proposed loan
     simulator.requestLoan(15000n, userPin);
@@ -848,7 +853,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Create a Proposed loan
     simulator.requestLoan(15000n, userPin);
@@ -870,7 +875,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Create an Approved loan (amount within limit)
     simulator.requestLoan(5000n, userPin);
@@ -890,7 +895,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Create and accept a Proposed loan
     simulator.requestLoan(15000n, userPin);
@@ -931,7 +936,6 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
   it("throws when blacklisted user tries to respondToLoan", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const userZwapKey = simulator.createTestUser("Alice").left.bytes;
     const userPin = 1234n;
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
@@ -939,8 +943,9 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     // Create a Proposed loan
     simulator.requestLoan(15000n, userPin);
 
-    // Blacklist the user
-    simulator.blacklistUser(userZwapKey);
+    // Blacklist the caller's derived pubkey at this PIN.
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
+    simulator.blacklistUser(userPubKey);
 
     // Try to respond - should fail
     expect(() => {
@@ -955,7 +960,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 650n, 1600n, 10n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Request more than Tier 2 max
     simulator.requestLoan(10000n, userPin);
@@ -972,7 +977,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 590n, 1000n, 1n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Request more than Tier 3 max
     simulator.requestLoan(5000n, userPin);
@@ -989,7 +994,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 500n, 1000n, 1n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
     simulator.requestLoan(1000n, userPin);
 
     const loan = simulator.getLedger().loans.lookup(userPubKey).lookup(1n);
@@ -1004,7 +1009,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     setAttestedPrivateState(simulator, 750n, 2500n, 30n, userPin);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
 
     // Create multiple Proposed loans
     simulator.requestLoan(15000n, userPin); // Loan 1 - Proposed
@@ -1039,10 +1044,10 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const userPin = 1234n;
 
     // Create a state with a tampered signature (wrong response)
-    const pubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, userPin);
+    const pubKeyHash = simulator.computeUserPubKeyHash(simulator.userSecretKey, userPin);
     const validState = createCustomSignedProfile(
       750n, 2500n, 30n, simulator.providerSk, pubKeyHash, simulator.providerId,
-      simulator.adminSecretKey,
+      simulator.userSecretKey,
     );
     simulator.circuitContext.currentPrivateState = {
       ...validState,
@@ -1064,10 +1069,10 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
     // Generate a different provider key pair (not registered)
     const otherProvider = generateProviderKeyPair();
-    const pubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, userPin);
+    const pubKeyHash = simulator.computeUserPubKeyHash(simulator.userSecretKey, userPin);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, otherProvider.sk, pubKeyHash, 99n, // unregistered provider ID
-      simulator.adminSecretKey,
+      simulator.userSecretKey,
     );
 
     expect(() => {
@@ -1094,18 +1099,20 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
 
   it("user binding prevents replay (signature for user A cannot be used by user B)", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
-    const aliceZwapKey = simulator.createTestUser("Alice").left.bytes;
     const userPin = 1234n;
 
-    // Create attestation signed for a different user's pubKeyHash
-    const bobZwapKey = simulator.createTestUser("Bob").left.bytes;
-    const bobPubKeyHash = simulator.computeUserPubKeyHash(bobZwapKey, userPin);
+    // Create an attestation signed for a DIFFERENT user's derived pubkey
+    // hash (someone else's secret + same pin). The simulator's caller — who
+    // holds `simulator.userSecretKey` — cannot use it: inside the circuit,
+    // the verified message is bound to the caller's own witness-derived
+    // pubkey hash, which won't match.
+    const otherUserSecret = simulator.generateUserSecret();
+    const otherPubKeyHash = simulator.computeUserPubKeyHash(otherUserSecret, userPin);
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
-      750n, 2500n, 30n, simulator.providerSk, bobPubKeyHash, simulator.providerId,
-      simulator.adminSecretKey,
+      750n, 2500n, 30n, simulator.providerSk, otherPubKeyHash, simulator.providerId,
+      simulator.userSecretKey,
     );
 
-    // Alice tries to use Bob's attestation - should fail because userPubKeyHash won't match
     expect(() => {
       simulator.requestLoan(5000n, userPin);
     }).toThrow("Invalid attestation signature");
@@ -1115,7 +1122,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
 
     // Rotate admin to a fresh secret the simulator does not hold
-    const bobAdminSecret = simulator.generateAdminSecret();
+    const bobAdminSecret = simulator.generateUserSecret();
     simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
     const newProvider = generateProviderKeyPair();
@@ -1129,7 +1136,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const simulator = new ZKLoanCreditScorerSimulator();
 
     // Rotate admin to a fresh secret the simulator does not hold
-    const bobAdminSecret = simulator.generateAdminSecret();
+    const bobAdminSecret = simulator.generateUserSecret();
     simulator.rotateAdmin(simulator.deriveAdminPublicKey(bobAdminSecret));
 
     expect(() => {
@@ -1155,8 +1162,8 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const provider2Id = 2n;
     simulator.registerProvider(provider2Id, provider2.pk);
 
-    const userPubKey = simulator.publicKey(userZwapKey, userPin);
-    const pubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, userPin);
+    const userPubKey = simulator.deriveUserPublicKey(simulator.userSecretKey, userPin);
+    const pubKeyHash = simulator.computeUserPubKeyHash(simulator.userSecretKey, userPin);
 
     // Use provider 1 for first loan (already set up by constructor)
     simulator.requestLoan(5000n, userPin);
@@ -1164,7 +1171,7 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     // Use provider 2 for second loan
     simulator.circuitContext.currentPrivateState = createCustomSignedProfile(
       750n, 2500n, 30n, provider2.sk, pubKeyHash, provider2Id,
-      simulator.adminSecretKey,
+      simulator.userSecretKey,
     );
     simulator.requestLoan(3000n, userPin);
 
@@ -1191,10 +1198,10 @@ it("migrates a small number of loans (1 batch) and cleans up", () => {
     const userPin = 1234n;
 
     // Create valid attestation
-    const pubKeyHash = simulator.computeUserPubKeyHash(userZwapKey, userPin);
+    const pubKeyHash = simulator.computeUserPubKeyHash(simulator.userSecretKey, userPin);
     const validState = createCustomSignedProfile(
       650n, 1600n, 10n, simulator.providerSk, pubKeyHash, simulator.providerId,
-      simulator.adminSecretKey,
+      simulator.userSecretKey,
     );
 
     // Tamper with credit score (signature was for 650, we change to 750)

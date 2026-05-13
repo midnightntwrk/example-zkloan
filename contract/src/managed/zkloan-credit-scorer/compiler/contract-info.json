@@ -4,6 +4,49 @@
   "runtime-version": "0.15.0",
   "circuits": [
     {
+      "name": "deriveUserPublicKey",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "sk",
+          "type": {
+            "type-name": "Struct",
+            "name": "UserSecretKey",
+            "elements": [
+              {
+                "name": "bytes",
+                "type": {
+                  "type-name": "Bytes",
+                  "length": 32
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "pin",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 65535
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Struct",
+        "name": "UserPublicKey",
+        "elements": [
+          {
+            "name": "bytes",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "deriveAdminPublicKey",
       "pure": true,
       "proof": false,
@@ -12,7 +55,7 @@
           "name": "sk",
           "type": {
             "type-name": "Struct",
-            "name": "AdminSecretKey",
+            "name": "UserSecretKey",
             "elements": [
               {
                 "name": "bytes",
@@ -106,7 +149,7 @@
           "name": "account",
           "type": {
             "type-name": "Struct",
-            "name": "ZswapCoinPublicKey",
+            "name": "UserPublicKey",
             "elements": [
               {
                 "name": "bytes",
@@ -134,7 +177,7 @@
           "name": "account",
           "type": {
             "type-name": "Struct",
-            "name": "ZswapCoinPublicKey",
+            "name": "UserPublicKey",
             "elements": [
               {
                 "name": "bytes",
@@ -254,31 +297,6 @@
         "type-name": "Tuple",
         "types": [
         ]
-      }
-    },
-    {
-      "name": "publicKey",
-      "pure": true,
-      "proof": false,
-      "arguments": [
-        {
-          "name": "sk",
-          "type": {
-            "type-name": "Bytes",
-            "length": 32
-          }
-        },
-        {
-          "name": "pin",
-          "type": {
-            "type-name": "Uint",
-            "maxval": 65535
-          }
-        }
-      ],
-      "result-type": {
-        "type-name": "Bytes",
-        "length": 32
       }
     },
     {
@@ -415,12 +433,12 @@
       }
     },
     {
-      "name": "getAdminSecret",
+      "name": "getUserSecret",
       "arguments": [
       ],
       "result type": {
         "type-name": "Struct",
-        "name": "AdminSecretKey",
+        "name": "UserSecretKey",
         "elements": [
           {
             "name": "bytes",

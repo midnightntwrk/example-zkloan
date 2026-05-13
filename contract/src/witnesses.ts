@@ -21,17 +21,21 @@ export type SchnorrSignature = {
   response: bigint;
 };
 
-// Per-user state holds (a) the user's credit profile + attestation, and
-// (b) a 32-byte admin secret. Only the deploying admin's secret hashes to
-// the value stored in `contractAdmin`; everyone else's `getAdminSecret`
-// returns a value that fails the equality check inside the ZK circuit.
+// Every browser/CLI instance carries a single 32-byte user secret in private
+// state. All identity in the contract — per-user loan identity AND the admin
+// role — derives from this one secret via domain-separated hashes inside the
+// ZK circuit. `ownPublicKey()` is never consulted: it returns a value the
+// prover claims, with no cryptographic binding to the transaction signer.
+// Whoever's `deriveAdminPublicKey(userSecret)` was pinned into `contractAdmin`
+// at deploy time holds the admin role; everyone else fails the equality
+// assertion inside the proof.
 export type ZKLoanCreditScorerPrivateState = {
   creditScore: bigint;
   monthlyIncome: bigint;
   monthsAsCustomer: bigint;
   attestationSignature: SchnorrSignature;
   attestationProviderId: bigint;
-  adminSecretKey: Uint8Array;
+  userSecretKey: Uint8Array;
 };
 
 const TWO_248 = 452312848583266388373324160190187140051835877600158453279131187530910662656n;
@@ -69,15 +73,15 @@ export const witnesses = {
     return [privateState, [q, r]];
   },
 
-  getAdminSecret: ({
+  getUserSecret: ({
     privateState
   }: WitnessContext<Ledger, ZKLoanCreditScorerPrivateState>): [
     ZKLoanCreditScorerPrivateState,
     { bytes: Uint8Array },
   ] => {
-    if (!privateState.adminSecretKey || privateState.adminSecretKey.length !== 32) {
-      throw new Error("getAdminSecret: adminSecretKey is missing or wrong length");
+    if (!privateState.userSecretKey || privateState.userSecretKey.length !== 32) {
+      throw new Error("getUserSecret: userSecretKey is missing or wrong length");
     }
-    return [privateState, { bytes: privateState.adminSecretKey }];
+    return [privateState, { bytes: privateState.userSecretKey }];
   },
 };

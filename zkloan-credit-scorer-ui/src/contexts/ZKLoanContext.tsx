@@ -172,22 +172,21 @@ function inMemoryPrivateStateProvider<PSI extends string, PS>(): PrivateStatePro
 }
 
 export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger, children }) => {
-  // Generate a fresh 32-byte admin secret per browser session. The deploying
-  // user holds this in memory; the ledger only sees its derived public key
-  // via `deriveAdminPublicKey`. Persisting this across reloads would let the
-  // user keep admin authority on a contract they already deployed; for now
-  // the demo regenerates on refresh, which means refreshing the page after
-  // deploying drops admin authority. That's intentional for the demo flow.
+  // Generate a single 32-byte user secret per browser session. This drives
+  // the caller's entire identity in the contract — per-user loan identity at
+  // any PIN, and the admin role if the user deploys. Refreshing the page
+  // drops both identities (intentional for the demo). A production app would
+  // persist this in encrypted local storage.
   const [privateState, setPrivateState] = useState<ZKLoanCreditScorerPrivateState>(() => {
-    const adminSecretKey = new Uint8Array(32);
-    crypto.getRandomValues(adminSecretKey);
+    const userSecretKey = new Uint8Array(32);
+    crypto.getRandomValues(userSecretKey);
     return {
       creditScore: 720n,
       monthlyIncome: 2500n,
       monthsAsCustomer: 24n,
       attestationSignature: { announcement: { x: 0n, y: 0n }, response: 0n },
       attestationProviderId: 0n,
-      adminSecretKey,
+      userSecretKey,
     };
   });
   const [currentProfileId, setCurrentProfileId] = useState<string>('user-001');
@@ -530,7 +529,7 @@ export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger
 
     // 1. Compute user pub key hash for attestation
     setFlowMessage('Computing identity for attestation...');
-    const pubKey = ZKLoanCreditScorer.pureCircuits.publicKey(walletPublicKeyBytes, pin);
+    const pubKey = ZKLoanCreditScorer.pureCircuits.deriveUserPublicKey({ bytes: privateState.userSecretKey }, pin).bytes;
     const userPubKeyHash = transientHash(bytes32Type, pubKey);
     logger.info('Computed userPubKeyHash for attestation');
 
@@ -596,7 +595,7 @@ export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger
         const contractState = await publicDataProviderRef.queryContractState(contractAddressRef);
         if (contractState) {
           const ledgerState = ZKLoanCreditScorer.ledger(contractState.data);
-          const userPublicKey = ZKLoanCreditScorer.pureCircuits.publicKey(walletPublicKeyBytes, pin);
+          const userPublicKey = ZKLoanCreditScorer.pureCircuits.deriveUserPublicKey({ bytes: privateState.userSecretKey }, pin).bytes;
 
           if (ledgerState.loans.member(userPublicKey)) {
             const userLoansMap = ledgerState.loans.lookup(userPublicKey);
@@ -677,7 +676,7 @@ export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger
       const ledgerState = ZKLoanCreditScorer.ledger(contractState.data);
 
       // Derive the user's public key from their wallet public key and PIN
-      const userPublicKey = ZKLoanCreditScorer.pureCircuits.publicKey(walletPublicKeyBytes, pin);
+      const userPublicKey = ZKLoanCreditScorer.pureCircuits.deriveUserPublicKey({ bytes: privateState.userSecretKey }, pin).bytes;
       logger.info({ userPublicKeyHex: Buffer.from(userPublicKey).toString('hex').slice(0, 20) + '...' }, 'Derived user public key');
 
       // Check if the user has any loans
