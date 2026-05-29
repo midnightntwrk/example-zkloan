@@ -324,28 +324,28 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('respondToLoan',
                                      'argument 1 (as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 108 char 1',
+                                     'zkloan-credit-scorer.compact line 106 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(loanId_0) === 'bigint' && loanId_0 >= 0n && loanId_0 <= 65535n)) {
           __compactRuntime.typeError('respondToLoan',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 108 char 1',
+                                     'zkloan-credit-scorer.compact line 106 char 1',
                                      'Uint<0..65536>',
                                      loanId_0)
         }
         if (!(typeof(secretPin_0) === 'bigint' && secretPin_0 >= 0n && secretPin_0 <= 65535n)) {
           __compactRuntime.typeError('respondToLoan',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 108 char 1',
+                                     'zkloan-credit-scorer.compact line 106 char 1',
                                      'Uint<0..65536>',
                                      secretPin_0)
         }
         if (!(typeof(accept_0) === 'boolean')) {
           __compactRuntime.typeError('respondToLoan',
                                      'argument 3 (argument 4 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 108 char 1',
+                                     'zkloan-credit-scorer.compact line 106 char 1',
                                      'Boolean',
                                      accept_0)
         }
@@ -376,14 +376,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('blacklistUser',
                                      'argument 1 (as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 190 char 1',
+                                     'zkloan-credit-scorer.compact line 186 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(account_0) === 'object' && account_0.bytes.buffer instanceof ArrayBuffer && account_0.bytes.BYTES_PER_ELEMENT === 1 && account_0.bytes.length === 32)) {
           __compactRuntime.typeError('blacklistUser',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 190 char 1',
+                                     'zkloan-credit-scorer.compact line 186 char 1',
                                      'struct UserPublicKey<bytes: Bytes<32>>',
                                      account_0)
         }
@@ -412,14 +412,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('removeBlacklistUser',
                                      'argument 1 (as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 196 char 1',
+                                     'zkloan-credit-scorer.compact line 191 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(account_0) === 'object' && account_0.bytes.buffer instanceof ArrayBuffer && account_0.bytes.BYTES_PER_ELEMENT === 1 && account_0.bytes.length === 32)) {
           __compactRuntime.typeError('removeBlacklistUser',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 196 char 1',
+                                     'zkloan-credit-scorer.compact line 191 char 1',
                                      'struct UserPublicKey<bytes: Bytes<32>>',
                                      account_0)
         }
@@ -449,14 +449,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('registerProvider',
                                      'argument 1 (as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 202 char 1',
+                                     'zkloan-credit-scorer.compact line 196 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(providerId_0) === 'bigint' && providerId_0 >= 0n && providerId_0 <= 65535n)) {
           __compactRuntime.typeError('registerProvider',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 202 char 1',
+                                     'zkloan-credit-scorer.compact line 196 char 1',
                                      'Uint<0..65536>',
                                      providerId_0)
         }
@@ -486,14 +486,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('removeProvider',
                                      'argument 1 (as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 208 char 1',
+                                     'zkloan-credit-scorer.compact line 201 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(providerId_0) === 'bigint' && providerId_0 >= 0n && providerId_0 <= 65535n)) {
           __compactRuntime.typeError('removeProvider',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 208 char 1',
+                                     'zkloan-credit-scorer.compact line 201 char 1',
                                      'Uint<0..65536>',
                                      providerId_0)
         }
@@ -522,14 +522,14 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('rotateAdmin',
                                      'argument 1 (as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 218 char 1',
+                                     'zkloan-credit-scorer.compact line 210 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(newAdmin_0) === 'object' && newAdmin_0.bytes.buffer instanceof ArrayBuffer && newAdmin_0.bytes.BYTES_PER_ELEMENT === 1 && newAdmin_0.bytes.length === 32)) {
           __compactRuntime.typeError('rotateAdmin',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 218 char 1',
+                                     'zkloan-credit-scorer.compact line 210 char 1',
                                      'struct AdminPublicKey<bytes: Bytes<32>>',
                                      newAdmin_0)
         }
@@ -559,21 +559,21 @@ export class Contract {
         if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
           __compactRuntime.typeError('changePin',
                                      'argument 1 (as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 224 char 1',
+                                     'zkloan-credit-scorer.compact line 215 char 1',
                                      'CircuitContext',
                                      contextOrig_0)
         }
         if (!(typeof(oldPin_0) === 'bigint' && oldPin_0 >= 0n && oldPin_0 <= 65535n)) {
           __compactRuntime.typeError('changePin',
                                      'argument 1 (argument 2 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 224 char 1',
+                                     'zkloan-credit-scorer.compact line 215 char 1',
                                      'Uint<0..65536>',
                                      oldPin_0)
         }
         if (!(typeof(newPin_0) === 'bigint' && newPin_0 >= 0n && newPin_0 <= 65535n)) {
           __compactRuntime.typeError('changePin',
                                      'argument 2 (argument 3 as invoked from Typescript)',
-                                     'zkloan-credit-scorer.compact line 224 char 1',
+                                     'zkloan-credit-scorer.compact line 215 char 1',
                                      'Uint<0..65536>',
                                      newPin_0)
         }
@@ -1198,7 +1198,7 @@ export class Contract {
                             'Maximum number of loans reached');
     const loanNumber_0 = ((t1) => {
                            if (t1 > 65535n) {
-                             throw new __compactRuntime.CompactError('zkloan-credit-scorer.compact line 185 char 24: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
+                             throw new __compactRuntime.CompactError('zkloan-credit-scorer.compact line 182 char 24: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
                            }
                            return t1;
                          })(totalLoans_0 + 1n);
@@ -1541,7 +1541,7 @@ export class Contract {
                                                                                                          result: undefined } }]).value);
     const lastDestinationId_0 = ((t1) => {
                                   if (t1 > 65535n) {
-                                    throw new __compactRuntime.CompactError('zkloan-credit-scorer.compact line 246 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
+                                    throw new __compactRuntime.CompactError('zkloan-credit-scorer.compact line 237 char 41: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
                                   }
                                   return t1;
                                 })(_descriptor_6.fromValue(__compactRuntime.queryLedgerState(context,
@@ -1583,13 +1583,13 @@ export class Contract {
                       {
                         const sourceId_0 = ((t1) => {
                                              if (t1 > 65535n) {
-                                               throw new __compactRuntime.CompactError('zkloan-credit-scorer.compact line 252 char 30: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
+                                               throw new __compactRuntime.CompactError('zkloan-credit-scorer.compact line 243 char 30: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
                                              }
                                              return t1;
                                            })(lastMigratedSourceId_0 + i_0 + 1n);
                         const destinationId_0 = ((t1) => {
                                                   if (t1 > 65535n) {
-                                                    throw new __compactRuntime.CompactError('zkloan-credit-scorer.compact line 253 char 35: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
+                                                    throw new __compactRuntime.CompactError('zkloan-credit-scorer.compact line 244 char 35: cast from Field or Uint value to smaller Uint value failed: ' + t1 + ' is greater than 65535');
                                                   }
                                                   return t1;
                                                 })(lastDestinationId_0 + i_0
@@ -2402,35 +2402,35 @@ export const pureCircuits = {
     if (!(typeof(ann_x_0) === 'bigint' && ann_x_0 >= 0 && ann_x_0 <= __compactRuntime.MAX_FIELD)) {
       __compactRuntime.typeError('schnorrChallenge',
                                  'argument 1',
-                                 'zkloan-credit-scorer.compact line 276 char 1',
+                                 'zkloan-credit-scorer.compact line 265 char 1',
                                  'Field',
                                  ann_x_0)
     }
     if (!(typeof(ann_y_0) === 'bigint' && ann_y_0 >= 0 && ann_y_0 <= __compactRuntime.MAX_FIELD)) {
       __compactRuntime.typeError('schnorrChallenge',
                                  'argument 2',
-                                 'zkloan-credit-scorer.compact line 276 char 1',
+                                 'zkloan-credit-scorer.compact line 265 char 1',
                                  'Field',
                                  ann_y_0)
     }
     if (!(typeof(pk_x_0) === 'bigint' && pk_x_0 >= 0 && pk_x_0 <= __compactRuntime.MAX_FIELD)) {
       __compactRuntime.typeError('schnorrChallenge',
                                  'argument 3',
-                                 'zkloan-credit-scorer.compact line 276 char 1',
+                                 'zkloan-credit-scorer.compact line 265 char 1',
                                  'Field',
                                  pk_x_0)
     }
     if (!(typeof(pk_y_0) === 'bigint' && pk_y_0 >= 0 && pk_y_0 <= __compactRuntime.MAX_FIELD)) {
       __compactRuntime.typeError('schnorrChallenge',
                                  'argument 4',
-                                 'zkloan-credit-scorer.compact line 276 char 1',
+                                 'zkloan-credit-scorer.compact line 265 char 1',
                                  'Field',
                                  pk_y_0)
     }
     if (!(Array.isArray(msg_0) && msg_0.length === 4 && msg_0.every((t) => typeof(t) === 'bigint' && t >= 0 && t <= __compactRuntime.MAX_FIELD))) {
       __compactRuntime.typeError('schnorrChallenge',
                                  'argument 5',
-                                 'zkloan-credit-scorer.compact line 276 char 1',
+                                 'zkloan-credit-scorer.compact line 265 char 1',
                                  'Vector<4, Field>',
                                  msg_0)
     }

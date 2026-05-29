@@ -101,8 +101,6 @@ export circuit requestLoan(amountRequested: Uint<16>, secretPin: Uint<16>): [] {
     const disclosedTopTierAmount = disclose(topTierAmount);
     const disclosedStatus = disclose(status);
     createLoan(disclosedRequesterPubKey.bytes, amountRequested, disclosedTopTierAmount, disclosedStatus);
-
-    return [];
 }
 
 export circuit respondToLoan(loanId: Uint<16>, secretPin: Uint<16>, accept: Boolean): [] {
@@ -123,7 +121,6 @@ export circuit respondToLoan(loanId: Uint<16>, secretPin: Uint<16>, accept: Bool
         : LoanApplication { authorizedAmount: 0, status: LoanStatus.NotAccepted };
 
     loans.lookup(disclosedPubKey).insert(disclosedLoanId, disclose(updatedLoan));
-    return [];
 }
 
 circuit evaluateApplicant(userPubKeyHash: Field): [Uint<16>, LoanStatus] {
@@ -184,32 +181,27 @@ circuit createLoan(requester: Bytes<32>, amountRequested: Uint<16>, topTierAmoun
     assert(totalLoans < 65535, "Maximum number of loans reached");
     const loanNumber = (totalLoans + 1) as Uint<16>;
     loans.lookup(requester).insert(loanNumber, disclose(loan));
-    return [];
 }
 
 export circuit blacklistUser(account: UserPublicKey): [] {
     assert(contractAdmin == deriveAdminPublicKey(getUserSecret()), "Only admin can blacklist users");
     blacklist.insert(disclose(account));
-    return [];
 }
 
 export circuit removeBlacklistUser(account: UserPublicKey): [] {
     assert(contractAdmin == deriveAdminPublicKey(getUserSecret()), "Only admin can remove from blacklist");
     blacklist.remove(disclose(account));
-    return [];
 }
 
 export circuit registerProvider(providerId: Uint<16>, providerPk: JubjubPoint): [] {
     assert(contractAdmin == deriveAdminPublicKey(getUserSecret()), "Only admin can register providers");
     providers.insert(disclose(providerId), disclose(providerPk));
-    return [];
 }
 
 export circuit removeProvider(providerId: Uint<16>): [] {
     assert(contractAdmin == deriveAdminPublicKey(getUserSecret()), "Only admin can remove providers");
     assert(providers.member(disclose(providerId)), "Provider not found");
     providers.remove(disclose(providerId));
-    return [];
 }
 
 // Hand the admin role to a new derived public key. The caller proves they
@@ -218,7 +210,6 @@ export circuit removeProvider(providerId: Uint<16>): [] {
 export circuit rotateAdmin(newAdmin: AdminPublicKey): [] {
     assert(contractAdmin == deriveAdminPublicKey(getUserSecret()), "Only admin can rotate admin role");
     contractAdmin = disclose(newAdmin);
-    return [];
 }
 
 export circuit changePin(oldPin: Uint<16>, newPin: Uint<16>): [] {
@@ -267,8 +258,6 @@ export circuit changePin(oldPin: Uint<16>, newPin: Uint<16>): [] {
             }
         }
     }
-
-    return [];
 }
 
 // Re-export schnorrChallenge from the schnorr module so it's available
