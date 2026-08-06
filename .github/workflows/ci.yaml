@@ -46,7 +46,7 @@ jobs:
       # build. setup-node still ships an older npm. See https://github.com/npm/cli/issues/4828
       - name: Update NPM
         run: |
-          npm install -g npm@latest
+          npm install -g npm@12.0.2
           npm --version
 
       - name: Install dependencies
