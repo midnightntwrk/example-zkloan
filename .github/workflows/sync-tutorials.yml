@@ -1,0 +1,93 @@
+name: Sync tutorial to docs
+
+# Lock down top-level permissions. Grant per-job.
+permissions: {}
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tutorials/**'
+      - '.github/workflows/sync-tutorials.yml'
+  workflow_dispatch: {}   # manual re-sync (e.g. after the docs PR was closed by mistake)
+
+# Every run copies the full current state of tutorials/, so only the latest
+# push matters; cancel any in-flight sync superseded by a newer one.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  sync-tutorial:
+    # Guard manual dispatches: running from a stale branch would force-push
+    # that branch's tutorials/ over the reused sync/zkloan-tutorial PR branch.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read              # checkout this repo; the docs repo uses the PAT
+    steps:
+      - name: Verify docs token is configured
+        env:
+          DOCS_TOKEN: ${{ secrets.DEVREL_DOCS_PR_TOKEN }}
+        run: |
+          if [ -z "$DOCS_TOKEN" ]; then
+            echo "::error::DEVREL_DOCS_PR_TOKEN is not set. Add it as a repository or org secret with permission to push branches and open PRs on midnightntwrk/midnight-docs."
+            exit 1
+          fi
+
+      - name: Checkout example-zkloan
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: source
+          persist-credentials: false
+
+      - name: Checkout midnight-docs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: midnightntwrk/midnight-docs
+          token: ${{ secrets.DEVREL_DOCS_PR_TOKEN }}
+          path: docs
+          # create-pull-request receives the token explicitly; don't leave the
+          # PAT sitting in docs/.git/config for the rest of the job.
+          persist-credentials: false
+
+      # Refuse to sync if the tutorial looks accidentally emptied — with
+      # rsync --delete below, a hollowed-out tutorials/ would otherwise
+      # propagate as a deletion of the whole docs page.
+      - name: Sanity-check tutorial content
+        run: |
+          if [ ! -f source/tutorials/index.mdx ]; then
+            echo "::error::tutorials/index.mdx is missing — refusing to sync."
+            exit 1
+          fi
+
+      # --delete propagates file removals/renames; --checksum defeats rsync's
+      # size+mtime quick-check, which can silently skip a same-length edit when
+      # both fresh checkouts stamp the file in the same wall-clock second (the
+      # tree is a handful of small files, so the cost is nil). The exclude is
+      # anchored to the transfer root: README.md documents this repo's setup
+      # and must not land in the docs, but a future nested README would sync.
+      - name: Sync tutorial into docs
+        run: |
+          rsync -av --delete --checksum \
+            --exclude '/README.md' \
+            source/tutorials/ docs/docs/tutorials/zk-loan/
+          echo "Resulting changes in midnight-docs:"
+          git -C docs status --short
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          path: docs
+          token: ${{ secrets.DEVREL_DOCS_PR_TOKEN }}
+          commit-message: 'docs: update zk-loan tutorial from ${{ github.repository }}@${{ github.sha }}'
+          title: 'docs: update ZK Loan tutorial'
+          body: |
+            Automated PR syncing the ZK Loan tutorial from [example-zkloan](${{ github.server_url }}/${{ github.repository }}).
+
+            - Source commit: ${{ github.repository }}@${{ github.sha }}
+            - Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            The tutorial's source of truth is [`tutorials/`](${{ github.server_url }}/${{ github.repository }}/tree/main/tutorials) in example-zkloan. Please make content edits there — changes made directly to `docs/tutorials/zk-loan/` will be overwritten by the next sync.
+          branch: sync/zkloan-tutorial
+          delete-branch: true
