@@ -23,6 +23,9 @@ Practical consequences:
 - Deletions and renames propagate too (the sync uses `rsync --delete`).
 - This `README.md` is excluded from the sync — it documents the setup for this repo
   and never appears in the docs.
+- `_category_.yaml` (Docusaurus sidebar metadata) is **owned by midnight-docs** and
+  is not part of this folder — the sync excludes it and leaves the docs-side copy
+  untouched, since sidebar position/label depend on the other tutorials there.
 - The sync PR reuses the branch `sync/zkloan-tutorial`, so rapid successive merges
   here update a single open docs PR rather than stacking new ones.
 - The workflow needs the `DEVREL_DOCS_PR_TOKEN` secret (a token allowed to push
@@ -37,4 +40,3 @@ Practical consequences:
 | `smart-contract.mdx` | Part 1 — the Compact smart contract |
 | `cli.mdx` | Part 2 — the CLI |
 | `attestation-api.mdx` | Part 3 — the attestation API |
-| `_category_.yaml` | Docusaurus sidebar metadata for the tutorial section |

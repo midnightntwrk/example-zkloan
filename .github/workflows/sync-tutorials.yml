@@ -64,13 +64,16 @@ jobs:
       # --delete propagates file removals/renames; --checksum defeats rsync's
       # size+mtime quick-check, which can silently skip a same-length edit when
       # both fresh checkouts stamp the file in the same wall-clock second (the
-      # tree is a handful of small files, so the cost is nil). The exclude is
+      # tree is a handful of small files, so the cost is nil). Excludes are
       # anchored to the transfer root: README.md documents this repo's setup
-      # and must not land in the docs, but a future nested README would sync.
+      # and must not land in the docs, and _category_.yaml (Docusaurus sidebar
+      # metadata) is owned by midnight-docs — excluded names on the receiver
+      # are also protected from --delete, so the docs-side copy survives.
       - name: Sync tutorial into docs
         run: |
           rsync -av --delete --checksum \
             --exclude '/README.md' \
+            --exclude '/_category_.yaml' \
             source/tutorials/ docs/docs/tutorials/zk-loan/
           echo "Resulting changes in midnight-docs:"
           git -C docs status --short
