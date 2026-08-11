@@ -16,6 +16,14 @@
 import { ZKLoanCreditScorerSimulator } from './zkloan-credit-scorer.simulator.js';
 import { createCustomSignedProfile, generateProviderKeyPair } from './utils/test-data.js';
 import { setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
+import {
+  ecMul,
+  ecAdd,
+  ecMulGenerator,
+  type WitnessContext,
+} from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
+import { type Ledger } from '../managed/zkloan-credit-scorer/contract/index.js';
+import { type ZKLoanCreditScorerPrivateState } from '../witnesses.js';
 import { describe, it, expect } from 'vitest';
 
 setNetworkId('undeployed');
@@ -1099,6 +1107,78 @@ describe('ZKLoanCreditScorer smart contract', () => {
     expect(() => {
       simulator.requestLoan(5000n, userPin);
     }).toThrow('Invalid attestation signature');
+  });
+
+  it('rejects a forged attestation that exploits an unconstrained challenge quotient', () => {
+    // Regression test for the Schnorr challenge-reduction soundness fix.
+    //
+    // schnorrVerify truncates the BLS12-381 challenge hash to a 248-bit Jubjub
+    // scalar via a witness-supplied (quotient, remainder): cFull == q*2^248 + r,
+    // then uses r as the Schnorr challenge. Before the fix `q` was an
+    // unconstrained `Field`, so the equation only had to hold modulo the field
+    // prime P — a prover could pick ANY r (challenge) and solve for a matching q,
+    // decoupling the challenge from the hash and forging signatures. Constraining
+    // the quotient to Uint<7> with `q < 116` forces the canonical integer
+    // decomposition, so r is pinned to cFull mod 2^248.
+    const P = 52435875175126190479447740508185965837690552500527637822603658699938581184513n;
+    const JUBJUB_ORDER = 6554484396890773809930967563523245729705921265872317281365359162392183254199n;
+    const TWO_248 = 452312848583266388373324160190187140051835877600158453279131187530910662656n;
+    const mod = (a: bigint, m: bigint): bigint => ((a % m) + m) % m;
+    const modInv = (a: bigint, m: bigint): bigint => {
+      let [oldR, r] = [mod(a, m), m];
+      let [oldS, s] = [1n, 0n];
+      while (r !== 0n) {
+        const quot = oldR / r;
+        [oldR, r] = [r, oldR - quot * r];
+        [oldS, s] = [s, oldS - quot * s];
+      }
+      return mod(oldS, m);
+    };
+
+    // Attacker-chosen response and truncated challenge (no provider secret used).
+    const response = 123456789012345678901234567890n; // < JUBJUB_ORDER
+    const forgedChallenge = 98765432109876543210n; // < 2^248
+
+    // Malicious reduction witness: return r = forgedChallenge and solve for the
+    // Field quotient that satisfies the (mod P) reduction equation for any cFull.
+    const forgedReduction = (
+      { privateState }: WitnessContext<Ledger, ZKLoanCreditScorerPrivateState>,
+      challengeHash: bigint,
+    ): [ZKLoanCreditScorerPrivateState, [bigint, bigint]] => {
+      const q = mod(mod(challengeHash - forgedChallenge, P) * modInv(TWO_248, P), P);
+      return [privateState, [q, forgedChallenge]];
+    };
+
+    const attacker = new ZKLoanCreditScorerSimulator({ getSchnorrReduction: forgedReduction });
+    const pin = 1234n;
+    const pk = attacker.providerPk;
+
+    // Forge the announcement R = response*G - forgedChallenge*pk, so the Schnorr
+    // verification equation response*G == R + forgedChallenge*pk holds by
+    // construction — without knowing the provider's secret key.
+    const negChallenge = mod(JUBJUB_ORDER - mod(forgedChallenge, JUBJUB_ORDER), JUBJUB_ORDER);
+    const forgedAnnouncement = ecAdd(ecMulGenerator(response), ecMul(pk, negChallenge));
+
+    // Sanity: the forged signature genuinely satisfies the curve equation, so the
+    // challenge-reduction range guard is the only thing that can reject it.
+    const lhs = ecMulGenerator(response);
+    const rhs = ecAdd(forgedAnnouncement, ecMul(pk, forgedChallenge));
+    expect(lhs.x).toEqual(rhs.x);
+    expect(lhs.y).toEqual(rhs.y);
+
+    // Fabricated Tier-1 credit data the attacker was never attested for.
+    attacker.circuitContext.currentPrivateState = {
+      creditScore: 800n,
+      monthlyIncome: 5000n,
+      monthsAsCustomer: 60n,
+      attestationSignature: { announcement: forgedAnnouncement, response },
+      attestationProviderId: attacker.providerId,
+      userSecretKey: attacker.userSecretKey,
+    };
+
+    // Pre-fix this forgery was accepted; the Uint<7> quotient + `q < 116` range
+    // check now rejects it before any loan is recorded.
+    expect(() => attacker.requestLoan(5000n, pin)).toThrow();
   });
 
   it('throws when non-admin tries to register provider', () => {

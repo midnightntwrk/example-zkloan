@@ -37,9 +37,11 @@ export class ZKLoanCreditScorerSimulator {
   readonly providerId: bigint = 1n;
   readonly userSecretKey: Uint8Array;
 
-  constructor() {
+  // `witnessOverrides` lets a test swap in a malicious witness implementation
+  // (e.g. a forged Schnorr challenge reduction) while keeping the rest honest.
+  constructor(witnessOverrides: Partial<typeof witnesses> = {}) {
     const user = createEitherTestUser('Alice');
-    this.contract = new Contract<ZKLoanCreditScorerPrivateState>(witnesses);
+    this.contract = new Contract<ZKLoanCreditScorerPrivateState>({ ...witnesses, ...witnessOverrides });
 
     // Generate provider key pair
     const keyPair = generateProviderKeyPair();
