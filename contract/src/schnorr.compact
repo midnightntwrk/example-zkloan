@@ -21,7 +21,9 @@ module schnorr {
 
   // The witness provides the quotient and remainder of dividing the challenge hash
   // by 2^248, so we can truncate it to fit in Jubjub's scalar field.
-  witness getSchnorrReduction(challengeHash: Field): [Field, Uint<248>];
+  // The quotient is Uint<7> (not Field) so the reduction below is checked over the
+  // integers rather than modulo the field prime — see the range assert in schnorrVerify.
+  witness getSchnorrReduction(challengeHash: Field): [Uint<7>, Uint<248>];
 
   export circuit schnorrVerify<#n>(
                    msg: Vector<n, Field>,
@@ -45,6 +47,12 @@ module schnorr {
     const TWO_248: Field =
             452312848583266388373324160190187140051835877600158453279131187530910662656 as Field;
     const [q, cTruncated] = getSchnorrReduction(cFull);
+    // Bound the quotient so the reduction equation holds over the integers, not
+    // modulo the field prime. Without this, q : Field is unconstrained and a prover
+    // could pick any cTruncated (i.e. any challenge) and solve for a matching q,
+    // forging the signature. floor((BLS12-381 scalar prime - 1) / 2^248) == 115,
+    // so an honest quotient is always in [0, 115].
+    assert(disclose(q) < 116, "Schnorr quotient out of range");
     assert(disclose(q) * TWO_248 + (disclose(cTruncated) as Field) == cFull,
            "Invalid challenge reduction"
            );
