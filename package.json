@@ -47,7 +47,7 @@
     "ws": "^8.19.0"
   },
   "overrides": {
-    "smoldot": "npm:@aspect-build/empty@0.0.0",
+    "smoldot": "npm:empty-npm-package@1.0.0",
     "@midnight-ntwrk/ledger-v8": "8.1.0",
     "@midnight-ntwrk/midnight-js-network-id": "4.1.1",
     "find-my-way": "^8.2.2",
