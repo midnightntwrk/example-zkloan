@@ -38,5 +38,5 @@ Practical consequences:
 | --- | --- |
 | `index.mdx` | Tutorial landing page |
 | `smart-contract.mdx` | Part 1 — the Compact smart contract |
-| `cli.mdx` | Part 2 — the CLI |
-| `attestation-api.mdx` | Part 3 — the attestation API |
+| `attestation-api.mdx` | Part 2 — the attestation API |
+| `cli.mdx` | Part 3 — the CLI |
