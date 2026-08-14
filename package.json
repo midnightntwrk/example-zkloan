@@ -50,7 +50,7 @@
     "smoldot": "npm:empty-npm-package@1.0.0",
     "@midnight-ntwrk/ledger-v8": "8.1.0",
     "@midnight-ntwrk/midnight-js-network-id": "4.1.1",
-    "find-my-way": "^8.2.2",
+    "find-my-way": "^9.0.0",
     "send": "^0.19.0",
     "uuid": "^11.1.1"
   },
