@@ -382,18 +382,13 @@ export const waitForFunds = (wallet: WalletFacade) =>
     wallet.state().pipe(
       Rx.throttleTime(10_000),
       Rx.tap((state) => {
-        const unshielded = state.unshielded?.balances[ledger.nativeToken().raw] ?? 0n;
-        const shielded = state.shielded?.balances[ledger.nativeToken().raw] ?? 0n;
-        logger.info(
-          `Waiting for NIGHT funds. Synced: ${state.isSynced}, Unshielded: ${unshielded}, Shielded: ${shielded}`,
-        );
+        const night = state.unshielded?.balances[ledger.nativeToken().raw] ?? 0n;
+        logger.info(`Waiting for NIGHT funds. Synced: ${state.isSynced}, NIGHT: ${night}`);
       }),
       Rx.filter((state) => state.isSynced),
-      Rx.map(
-        (s) =>
-          (s.unshielded?.balances[ledger.nativeToken().raw] ?? 0n) +
-          (s.shielded?.balances[ledger.nativeToken().raw] ?? 0n),
-      ),
+      // NIGHT is unshielded-only — the shielded slot for the native token
+      // type is structurally always zero, so only the unshielded balance counts.
+      Rx.map((s) => s.unshielded?.balances[ledger.nativeToken().raw] ?? 0n),
       Rx.filter((balance) => balance > 0n),
     ),
   );
@@ -406,21 +401,15 @@ export const waitForFunds = (wallet: WalletFacade) =>
  * tNIGHT / tDUST variants. We query the native token for NIGHT and the
  * dust wallet for DUST and surface both so it's obvious which is which.
  */
-export const displayWalletBalances = async (
-  wallet: WalletFacade,
-): Promise<{ unshielded: bigint; shielded: bigint; total: bigint; dust: bigint }> => {
+export const displayWalletBalances = async (wallet: WalletFacade): Promise<{ night: bigint; dust: bigint }> => {
   const state = await Rx.firstValueFrom(wallet.state());
-  const unshielded = state.unshielded?.balances[ledger.nativeToken().raw] ?? 0n;
-  const shielded = state.shielded?.balances[ledger.nativeToken().raw] ?? 0n;
-  const total = unshielded + shielded;
+  const night = state.unshielded?.balances[ledger.nativeToken().raw] ?? 0n;
   const dust = state.dust?.balance(new Date()) ?? 0n;
 
-  logger.info(`Unshielded NIGHT balance: ${unshielded}`);
-  logger.info(`Shielded NIGHT balance: ${shielded}`);
-  logger.info(`Total NIGHT balance: ${total}`);
+  logger.info(`Unshielded NIGHT balance: ${night}`);
   logger.info(`DUST balance (for fees): ${dust}`);
 
-  return { unshielded, shielded, total, dust };
+  return { night, dust };
 };
 
 /**
@@ -598,9 +587,9 @@ export const buildWalletAndWaitForFunds = async (config: Config, mnemonic: strin
   await waitForSync(walletContext.wallet);
 
   // Display and check balance
-  const { total } = await displayWalletBalances(walletContext.wallet);
+  const { night } = await displayWalletBalances(walletContext.wallet);
 
-  if (total === 0n) {
+  if (night === 0n) {
     logger.info('Waiting to receive tokens...');
     await waitForFunds(walletContext.wallet);
     await displayWalletBalances(walletContext.wallet);
@@ -642,9 +631,9 @@ export const buildWalletFromHexSeed = async (config: Config, hexSeed: string): P
   await waitForSync(walletContext.wallet);
 
   // Display and check balance
-  const { total } = await displayWalletBalances(walletContext.wallet);
+  const { night } = await displayWalletBalances(walletContext.wallet);
 
-  if (total === 0n) {
+  if (night === 0n) {
     logger.info('Waiting to receive tokens...');
     await waitForFunds(walletContext.wallet);
     await displayWalletBalances(walletContext.wallet);
