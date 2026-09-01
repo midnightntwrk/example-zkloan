@@ -38,4 +38,5 @@ export type ZKLoanCreditScorerProviders = MidnightProviders<
 export type ZKLoanCreditScorerContract = ZKLoanCreditScorer.Contract<ZKLoanCreditScorerPrivateState>;
 
 export type DeployedZKLoanCreditScorerContract =
-  DeployedContract<ZKLoanCreditScorerContract> | FoundContract<ZKLoanCreditScorerContract>;
+  | DeployedContract<ZKLoanCreditScorerContract>
+  | FoundContract<ZKLoanCreditScorerContract>;
