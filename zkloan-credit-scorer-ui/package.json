@@ -44,7 +44,7 @@
     "stream-browserify": "^3.0.0",
     "typescript": "^5.9.3",
     "vite": "^6.3.5",
-    "vite-plugin-node-polyfills": "^0.24.0",
+    "vite-plugin-node-polyfills": "^0.28.0",
     "vite-plugin-top-level-await": "^1.5.0",
     "vite-plugin-wasm": "^3.4.1"
   }
