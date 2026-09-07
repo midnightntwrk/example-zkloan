@@ -18,8 +18,8 @@
     "restify": "^11.1.0"
   },
   "devDependencies": {
-    "@types/restify": "^8.5.12",
-    "tsx": "^4.19.0",
+    "@types/restify": "8.5.12",
+    "tsx": "4.23.13",
     "vitest": "^4.0.15"
   }
 }
