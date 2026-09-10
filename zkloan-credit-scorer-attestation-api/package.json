@@ -20,6 +20,6 @@
   "devDependencies": {
     "@types/restify": "^8.5.12",
     "tsx": "^4.19.0",
-    "vitest": "^4.0.15"
+    "vitest": "^4.1.11"
   }
 }

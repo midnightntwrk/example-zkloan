@@ -24,7 +24,7 @@
     "testcontainers": "^11.10.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.15"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
