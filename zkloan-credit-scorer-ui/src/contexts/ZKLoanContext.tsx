@@ -215,11 +215,12 @@ export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger
     const result = await firstValueFrom(
       interval(100).pipe(
         map(() => {
-          // In v4.x, wallets are under window.midnight[key] where key is a UUID
+          // DApp Connector v4: wallets inject under window.midnight keyed by UUID.
+          // Lace may also expose a convenience alias at mnLace; do not prefer it -
+          // enumerate so other wallets work and UUID-only installs are found.
           const midnight = (window as unknown as { midnight?: Record<string, InitialAPI> }).midnight;
           if (!midnight) return undefined;
-          // Try mnLace first, then any other wallet
-          return midnight.mnLace || Object.values(midnight)[0];
+          return Object.values(midnight)[0];
         }),
         tap((initialAPI) => {
           logger.trace(initialAPI, 'Check for wallet connector API');
@@ -234,7 +235,7 @@ export const ZKLoanProvider: React.FC<Readonly<ZKLoanProviderProps>> = ({ logger
           with: () =>
             throwError(() => {
               logger.error('Could not find wallet connector API');
-              return new Error('Could not find Midnight Lace wallet. Is the extension installed?');
+              return new Error('Could not find a Midnight-compatible wallet. Is a wallet extension installed?');
             }),
         }),
         concatMap(async (initialAPI) => {
