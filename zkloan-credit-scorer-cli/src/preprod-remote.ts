@@ -17,6 +17,9 @@ import { createLogger } from './logger-utils.js';
 import { run } from './cli.js';
 import { PreprodConfig } from './config.js';
 
+if (!process.env.BLOCKFROST_PROJECT_ID?.trim()) {
+  throw new Error('BLOCKFROST_PROJECT_ID is not set. Add your Blockfrost Midnight Preprod project ID to .env.');
+}
 const config = new PreprodConfig();
 const logger = await createLogger(config.logDir);
 await run(config, logger);

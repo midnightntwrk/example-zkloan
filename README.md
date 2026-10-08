@@ -125,10 +125,13 @@ The CLI uses a pre-funded hex seed against the local `undeployed` network, so no
 
 Requires a BIP39 mnemonic for a Preprod wallet funded with tDUST from the [Preprod faucet](https://midnight-tmnight-preprod.nethermind.dev/). You **also need a local proof server running on port 6300** (already running if you did step 4; otherwise spin one up with `docker run --rm -p 6300:6300 midnightntwrk/proof-server:8.1.0 midnight-proof-server -v`).
 
-Add the mnemonic to your CLI `.env`:
+Blockfrost serves the Preprod indexer and node RPC, so you also need a Blockfrost project ID for the **Midnight Preprod** network. Create one at [blockfrost.io](https://blockfrost.io). See [Getting a Blockfrost project token](https://docs.midnight.network/guides/networks-and-environments#getting-a-blockfrost-project-token).
+
+Add the mnemonic and the project ID to your CLI `.env`:
 
 ```bash
 WALLET_MNEMONIC="<24-word BIP39 mnemonic>"
+BLOCKFROST_PROJECT_ID="<your Midnight Preprod project ID>"
 ```
 
 Then:

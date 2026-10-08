@@ -365,7 +365,7 @@ npm run build
 |---|---|---|---|---|
 | Standalone | `http://localhost:8088` | `ws://localhost:9944` | Undeployed | Local docker-compose (see [standalone.yml](../zkloan-credit-scorer-cli/standalone.yml)) |
 | TestnetLocal | `http://localhost:8088` | `ws://localhost:9944` | TestNet | Local proof server + remote testnet |
-| Preprod | `https://indexer.preprod.midnight.network/api/v4/graphql` | `wss://rpc.preprod.midnight.network` | Preprod | Public preprod testnet |
+| Preprod | `https://midnight-preprod.blockfrost.io/api/v0?project_id=<token>` | `wss://rpc.midnight-preprod.blockfrost.io?project_id=<token>` | Preprod | Public preprod testnet through Blockfrost, needs a Midnight Preprod project token in `BLOCKFROST_PROJECT_ID` |
 
 ---
 
