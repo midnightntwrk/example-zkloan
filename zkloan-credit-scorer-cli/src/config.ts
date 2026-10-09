@@ -44,11 +44,16 @@ export class StandaloneConfig implements Config {
   }
 }
 
+// Blockfrost serves the Preprod indexer and node RPC, and every request needs a
+// Midnight Preprod project token from BLOCKFROST_PROJECT_ID.
+const withBlockfrostKey = (url: string): string =>
+  `${url}?project_id=${encodeURIComponent(process.env.BLOCKFROST_PROJECT_ID?.trim() ?? '')}`;
+
 export class PreprodConfig implements Config {
   logDir = path.resolve(currentDir, '..', 'logs', 'preprod', `${new Date().toISOString()}.log`);
-  indexer = 'https://indexer.preprod.midnight.network/api/v4/graphql';
-  indexerWS = 'wss://indexer.preprod.midnight.network/api/v4/graphql/ws';
-  node = 'wss://rpc.preprod.midnight.network';
+  indexer = withBlockfrostKey('https://midnight-preprod.blockfrost.io/api/v0');
+  indexerWS = withBlockfrostKey('wss://midnight-preprod.blockfrost.io/api/v0/ws');
+  node = withBlockfrostKey('wss://rpc.midnight-preprod.blockfrost.io');
   proofServer = 'http://127.0.0.1:6300';
   networkId = 'preprod';
 }

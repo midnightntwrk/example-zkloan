@@ -88,6 +88,9 @@ export function parseArgs(required: string[]): TestConfiguration {
     }
     switch (env) {
       case 'preprod':
+        if (!process.env.BLOCKFROST_PROJECT_ID?.trim()) {
+          throw new Error('BLOCKFROST_PROJECT_ID environment variable is not defined.');
+        }
         cfg = new PreprodConfig();
         psMode = 'preprod';
         cacheFileName = `${seed.substring(0, 7)}-${psMode}.state`;
