@@ -1,3 +1,10 @@
+> [!WARNING]
+> **This repository is archived and no longer maintained.**
+>
+> `example-zkloan` now lives in [midnight-examples](https://github.com/midnightntwrk/midnight-examples), Midnight's example monorepo, where every example compiles and runs against one pinned toolchain in CI.
+>
+> Use [`examples/zk-loan`](https://github.com/midnightntwrk/midnight-examples/tree/main/examples/zk-loan) and follow the [ZK loan tutorial](https://docs.midnight.network/tutorials/zk-loan). This repo is read-only and will not be updated for future SDK releases.
+
 # The ZK Loan credit scorer dapp
 
 **Attribution: This project is built on the Midnight Network.**
