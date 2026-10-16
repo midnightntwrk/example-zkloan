@@ -20,8 +20,9 @@ export const LaceGate: React.FC<React.PropsWithChildren> = ({ children }) => {
     const check = () => {
       if (cancelled) return;
       const mid = (window as unknown as { midnight?: Record<string, unknown> }).midnight;
-      const hasLace = !!mid && (!!mid.mnLace || Object.keys(mid).length > 0);
-      if (hasLace) {
+      // Enumerate any injected Midnight connector (UUID keys); do not require mnLace.
+      const hasWallet = !!mid && Object.keys(mid).length > 0;
+      if (hasWallet) {
         setStatus('found');
         return;
       }
@@ -65,7 +66,7 @@ export const LaceGate: React.FC<React.PropsWithChildren> = ({ children }) => {
             color: tokens.inkMuted,
           }}
         >
-          Looking for Midnight Lace…
+          Looking for a Midnight wallet…
         </Typography>
       </Box>
     );
@@ -92,7 +93,7 @@ export const LaceGate: React.FC<React.PropsWithChildren> = ({ children }) => {
         variant="h4"
         sx={{ color: tokens.ink, mb: 2, lineHeight: 1.15 }}
       >
-        Install Midnight Lace to continue
+        Install a Midnight wallet to continue
       </Typography>
       <Typography
         sx={{
@@ -103,9 +104,9 @@ export const LaceGate: React.FC<React.PropsWithChildren> = ({ children }) => {
           mb: 3,
         }}
       >
-        This DApp signs every transaction through the Midnight Lace browser
-        extension. We couldn't find it on <code>window.midnight</code> — install
-        it, set the network to <strong style={{ color: tokens.ink }}>Preprod</strong>,
+        This DApp signs every transaction through a Midnight-compatible browser
+        wallet (for example Lace). We couldn't find one on <code>window.midnight</code>
+        - install it, set the network to <strong style={{ color: tokens.ink }}>Preprod</strong>,
         and reload this page.
       </Typography>
 
