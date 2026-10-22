@@ -38,7 +38,7 @@ jobs:
         # process.binding('http_parser') internal removed in Node 23+. Node 24
         # therefore breaks `require('restify')` at import. Revisit if/when the
         # attestation API migrates off restify.
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: '22'
 
@@ -46,7 +46,7 @@ jobs:
       # build. setup-node still ships an older npm. See https://github.com/npm/cli/issues/4828
       - name: Update NPM
         run: |
-          npm install -g npm@12.0.2
+          npm install -g npm@12.2.1
           npm --version
 
       - name: Install dependencies
